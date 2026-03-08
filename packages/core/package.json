@@ -45,7 +45,8 @@
       "import": "./dist/index.esm.js",
       "require": "./dist/index.js"
     },
-    "./dist/styles.css": "./dist/styles.css"
+    "./dist/styles.css": "./dist/styles.css",
+    "./dist/styles.components.css": "./dist/styles.components.css"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && rollup -c --bundleConfigAsCjs && pnpm run build:css",
