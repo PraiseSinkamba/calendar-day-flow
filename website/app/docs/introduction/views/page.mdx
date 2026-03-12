@@ -76,12 +76,29 @@ The month view displays a traditional calendar grid showing all days in a month.
 
 #### Configuration
 
-| Property             | Type      | Default | Description                                                                                     |
-| :------------------- | :-------- | :------ | :---------------------------------------------------------------------------------------------- |
-| `showWeekNumbers`    | `boolean` | `false` | Whether to show week numbers.                                                                   |
-| `showMonthIndicator` | `boolean` | `true`  | Whether to show the month indicator title when scrolling.                                       |
-| `startOfWeek`        | `number`  | `1`     | The start day of the week (0 for Sunday, 1 for Monday, etc.).                                   |
-| `snapToMonth`        | `boolean` | `false` | When enabled, the view snaps to the start of the dominant month after the user stops scrolling. |
+| Property             | Type                | Default | Description                                                                                     |
+| :------------------- | :------------------ | :------ | :---------------------------------------------------------------------------------------------- |
+| `showWeekNumbers`    | `boolean`           | `false` | Whether to show week numbers.                                                                   |
+| `showMonthIndicator` | `boolean`           | `true`  | Whether to show the month indicator title when scrolling.                                       |
+| `startOfWeek`        | `number`            | `1`     | The start day of the week (0 for Sunday, 1 for Monday, etc.).                                   |
+| `snapToMonth`        | `boolean`           | `false` | When enabled, the view snaps to the start of the dominant month after the user stops scrolling. |
+| `scroll`             | `MonthScrollConfig` | —       | Controls scroll locking and month-switch animation. See below.                                  |
+
+#### MonthScrollConfig
+
+| Property     | Type                    | Default     | Description                                                                                                                                                                                                                      |
+| :----------- | :---------------------- | :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `disabled`   | `boolean`               | `false`     | Disables continuous scrolling. Months can only be changed via the Prev / Next navigation buttons.                                                                                                                                |
+| `transition` | `'fade'` \| `undefined` | `undefined` | Animation when switching months (only applies when `disabled: true`). `'fade'` fades the current month out with a horizontal slide and fades the next month in. When omitted, the original smooth-scroll animation is preserved. |
+
+```tsx copy
+createMonthView({
+  scroll: {
+    disabled: true, // lock to one month at a time, Prev/Next only
+    transition: 'fade', // optional fade animation (omit to keep smooth scroll)
+  },
+});
+```
 
 ```tsx copy {10}
 import {
