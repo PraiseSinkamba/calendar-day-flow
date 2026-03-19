@@ -164,6 +164,11 @@ export interface YearViewConfig extends ViewFactoryConfig {
    * Receives the clicked date and its events; return null/undefined to use the default popup.
    */
   gridPopupContent?: (date: Date, events: Event[]) => ComponentChildren;
+  /**
+   * Grid mode: number of heatmap intensity levels.
+   * @default 5
+   */
+  gridHeatmapLevels?: number;
 }
 
 /**

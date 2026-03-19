@@ -13,12 +13,14 @@ interface GridYearViewProps {
   config?: YearViewConfig;
 }
 
-/** Returns inline background color for event concentration (#fefdeb → #fe8e08) */
-function getIntensityStyle(count: number): { backgroundColor?: string } {
+/** Returns inline background color for event concentration using CSS variables */
+function getIntensityStyle(
+  count: number,
+  levels: number
+): { backgroundColor?: string } {
   if (count === 0) return {};
-  if (count === 1) return { backgroundColor: '#fefdeb' };
-  if (count <= 3) return { backgroundColor: '#fec579' };
-  return { backgroundColor: '#fe8e08' };
+  const step = Math.min(count, levels);
+  return { backgroundColor: `var(--heat-${step})` };
 }
 
 /** Build a map from 'YYYY-MM-DD' → Event[] for events in the year */
@@ -98,6 +100,7 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
   const rawEvents = app.getEvents();
   const startOfWeek = config?.startOfWeek ?? 1;
   const showTimedEvents = config?.showTimedEventsInYearView ?? false;
+  const heatmapLevels = config?.gridHeatmapLevels ?? 5;
 
   const today = useMemo(() => {
     const t = new Date();
@@ -288,81 +291,77 @@ export const GridYearView = ({ app, config }: GridYearViewProps) => {
         {monthsData.map(month => (
           <div
             key={month.monthIndex}
-            className='flex h-full min-h-0 flex-col rounded-lg border border-gray-100 bg-white p-2 dark:border-gray-800 dark:bg-gray-900'
+            className='df-year-grid-month flex h-full min-h-0 flex-col rounded-lg border border-gray-100 bg-white p-2 dark:border-gray-800 dark:bg-gray-900'
           >
             {/* Month name */}
             <div className='mb-1 shrink-0 text-xs font-semibold text-gray-900 dark:text-gray-100'>
               {month.monthName}
             </div>
 
-            {/* Day-of-week headers */}
-            <div
-              className='mb-0.5 grid shrink-0'
-              style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}
-            >
-              {weekDayLabels.map((label, i) => (
-                <div
-                  key={i}
-                  className='text-center text-[9px] font-medium text-gray-400 dark:text-gray-500'
-                >
-                  {label}
-                </div>
-              ))}
-            </div>
-
-            {/* Day cells — always 42 cells (6 rows × 7 cols) */}
-            <div
-              className='grid'
-              style={{
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gridTemplateRows: 'repeat(6, 1fr)',
-                flex: '1 1 0px',
-                minHeight: 0,
-              }}
-            >
-              {month.cells.map(({ date, isCurrentMonth }, i) => {
-                const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                const eventCount = isCurrentMonth
-                  ? (heatmapEventMap.get(key)?.length ?? 0)
-                  : 0;
-                const intensityStyle = isCurrentMonth
-                  ? getIntensityStyle(eventCount)
-                  : {};
-                const isToday = date.getTime() === today.getTime();
-                const isPopupOpen =
-                  popup !== null &&
-                  popup.date.getTime() === date.getTime() &&
-                  popup.monthIndex === month.monthIndex;
-
-                return (
+            {/* Container for labels and cells to ensure alignment and fit */}
+            <div className='flex min-h-0 flex-1 overflow-hidden'>
+              <div
+                className='grid h-full w-full gap-px'
+                style={{
+                  gridTemplateColumns: 'repeat(7, 1fr)',
+                  gridTemplateRows: 'repeat(7, 1fr)',
+                }}
+              >
+                {/* Day-of-week headers */}
+                {weekDayLabels.map((label, i) => (
                   <div
-                    key={`${month.monthIndex}-${i}`}
-                    data-grid-day-cell
-                    className={`cursor-pointer rounded-sm transition-colors hover:opacity-80 ${
-                      isPopupOpen ? 'ring-2 ring-primary ring-offset-1' : ''
-                    }`}
-                    style={intensityStyle}
-                    onClick={e => handleDateClick(e, date, month.monthIndex)}
-                    onDblClick={() => handleDateDoubleClick(date)}
+                    key={i}
+                    className='flex items-center justify-center text-[9px] font-medium text-gray-400 dark:text-gray-500'
                   >
-                    <div className='flex h-full w-full items-center justify-center'>
-                      <span
-                        className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-medium ${
-                          isToday
-                            ? 'bg-primary font-bold text-primary-foreground'
-                            : isCurrentMonth
-                              ? eventCount > 0
-                                ? 'text-gray-800 dark:text-gray-100'
-                                : 'text-gray-500 dark:text-gray-400'
-                              : 'text-gray-300 dark:text-gray-600'
-                        }`}
-                      >
-                        {date.getDate()}
-                      </span>
-                    </div>
+                    {label}
                   </div>
-                );
-              })}
+                ))}
+
+                {/* Day cells — exactly 42 cells (6 rows × 7 cols) */}
+                {month.cells.map(({ date, isCurrentMonth }, i) => {
+                  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                  const eventCount = isCurrentMonth
+                    ? (heatmapEventMap.get(key)?.length ?? 0)
+                    : 0;
+                  const intensityStyle = isCurrentMonth
+                    ? getIntensityStyle(eventCount, heatmapLevels)
+                    : {};
+                  const isToday = date.getTime() === today.getTime();
+                  const isPopupOpen =
+                    popup !== null &&
+                    popup.date.getTime() === date.getTime() &&
+                    popup.monthIndex === month.monthIndex;
+
+                  return (
+                    <div
+                      key={`${month.monthIndex}-${i}`}
+                      data-grid-day-cell
+                      className='cursor-pointer rounded-sm transition-colors hover:opacity-80'
+                      style={intensityStyle}
+                      onClick={e => handleDateClick(e, date, month.monthIndex)}
+                      onDblClick={() => handleDateDoubleClick(date)}
+                    >
+                      <div className='flex h-full w-full items-center justify-center'>
+                        <span
+                          className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-medium ${
+                            isToday
+                              ? 'bg-primary font-bold text-primary-foreground'
+                              : isCurrentMonth
+                                ? eventCount > 0
+                                  ? eventCount >= 4
+                                    ? 'text-white'
+                                    : 'text-gray-800 dark:text-gray-100'
+                                  : 'text-gray-500 dark:text-gray-400'
+                                : 'text-gray-300 dark:text-gray-600'
+                          }`}
+                        >
+                          {date.getDate()}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ))}
