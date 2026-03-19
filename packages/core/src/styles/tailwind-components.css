@@ -4,14 +4,6 @@
  * It does NOT emit Tailwind utility classes, so it will not conflict with
  * the host application's own Tailwind instance.
  *
- * Import this instead of styles.css if your project uses Tailwind v4.
- * Your project's Tailwind instance provides the utility classes; DayFlow's
- * source files are automatically scanned by @tailwindcss/vite. For other
- * bundlers, add an @source pointing to DayFlow's node_modules source files
- * in your own Tailwind entry CSS.
- *
- * Usage:
- *   import '@dayflow/core/dist/styles.components.css'
  */
 
 /* @tailwindcss/theme is imported here only to resolve @apply at build time.
