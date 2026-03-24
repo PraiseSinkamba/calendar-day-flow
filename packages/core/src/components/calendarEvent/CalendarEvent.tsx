@@ -70,6 +70,11 @@ const CalendarEvent = ({
   enableTouch,
   hideTime,
   timeFormat = '24h',
+  styleOverride,
+  className,
+  disableDefaultStyle = false,
+  renderVisualContent,
+  resizeHandleOrientation,
 }: CalendarEventProps) => {
   const customRenderingStore = useContext(CustomRenderingContext);
   const isTouchEnabled = enableTouch ?? isMobile;
@@ -126,13 +131,6 @@ const CalendarEvent = ({
     segment,
     detailPanelKey,
   });
-
-  const isEventSelected =
-    (selectedEventId === undefined
-      ? isSelected
-      : selectedEventId === event.id) ||
-    (!isTouchEnabled && isPressed) ||
-    isBeingDragged;
 
   const [eventVisibility, setEventVisibility] = useState<
     'visible' | 'sticky-top' | 'sticky-bottom'
@@ -194,32 +192,43 @@ const CalendarEvent = ({
     });
 
   // Actions Hook
-  const { handleClick, handleDoubleClick, handleContextMenu } = useEventActions(
-    {
-      event,
-      viewType,
-      isAllDay,
-      isMultiDay,
-      segment,
-      multiDaySegmentInfo,
-      calendarRef,
-      firstHour,
-      hourHeight,
-      isMobile,
-      canOpenDetail,
-      detailPanelKey,
-      app,
-      onEventSelect,
-      onDetailPanelToggle,
-      setIsSelected,
-      setDetailPanelPosition,
-      setContextMenuPosition,
-      setActiveDayIndex,
-      getClickedDayIdx,
-      updatePanelPosition,
-      selectedEventElementRef,
-    }
-  );
+  const {
+    handleClick,
+    handleDoubleClick,
+    handleContextMenu,
+    hasPendingSelection,
+  } = useEventActions({
+    event,
+    viewType,
+    isAllDay,
+    isMultiDay,
+    segment,
+    multiDaySegmentInfo,
+    calendarRef,
+    firstHour,
+    hourHeight,
+    isMobile,
+    canOpenDetail,
+    detailPanelKey,
+    app,
+    onEventSelect,
+    onDetailPanelToggle,
+    setIsSelected,
+    setDetailPanelPosition,
+    setContextMenuPosition,
+    setActiveDayIndex,
+    getClickedDayIdx,
+    updatePanelPosition,
+    selectedEventElementRef,
+  });
+
+  const isEventSelected =
+    (selectedEventId === undefined
+      ? isSelected
+      : selectedEventId === event.id) ||
+    hasPendingSelection ||
+    (!isTouchEnabled && isPressed) ||
+    isBeingDragged;
 
   // Styles Hook
   const { calculateEventStyle } = useEventStyles({
@@ -393,15 +402,16 @@ const CalendarEvent = ({
           isMultiDay,
           segment,
           yearSegment
-        )} ${isAllDay && newlyCreatedEventId === event.id ? 'df-all-day-event-animate' : ''}`}
+        )} ${isAllDay && newlyCreatedEventId === event.id ? 'df-all-day-event-animate' : ''} ${className ?? ''}`}
         style={{
-          ...calculateEventStyle(),
+          ...(disableDefaultStyle ? {} : calculateEventStyle()),
           backgroundColor: isEventSelected
             ? getSelectedBgColor(calendarId, calendarRegistry)
             : getEventBgColor(calendarId, calendarRegistry),
           color: isEventSelected
             ? '#fff'
             : getEventTextColor(calendarId, calendarRegistry),
+          ...styleOverride,
         }}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
@@ -462,8 +472,9 @@ const CalendarEvent = ({
           multiDaySegmentInfo={multiDaySegmentInfo}
           customRenderingStore={customRenderingStore}
           eventContentSlotArgs={eventContentSlotArgs}
-          layout={layout}
           timeFormat={timeFormat}
+          renderVisualContent={renderVisualContent}
+          resizeHandleOrientation={resizeHandleOrientation}
         />
       </div>
 
