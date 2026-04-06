@@ -44,6 +44,7 @@ const DefaultCalendarSidebar = ({
   toggleCalendarVisibility,
   isCollapsed,
   setCollapsed,
+  showEventDots,
   renderCalendarContextMenu,
   renderSidebarHeader,
   editingCalendarId: propEditingCalendarId,
@@ -558,12 +559,19 @@ const DefaultCalendarSidebar = ({
               showHeader={true}
               onMonthChange={handleMonthChange}
               onDateSelect={date => app.setCurrentDate(date)}
+              events={app.getEvents()}
+              showEventDots={showEventDots}
+              calendarRegistry={app.getCalendarRegistry()}
+              timeZone={
+                (app.getViewConfig(app.state.currentView)
+                  ?.secondaryTimeZone as string) || undefined
+              }
             />
           </div>
         </>
       )}
 
-      {isEditable && contextMenu && (
+      {contextMenu && app.canMutateFromUI(contextMenu.calendarId) && (
         <ContextMenu
           ref={contextMenuRef}
           x={contextMenu.x}

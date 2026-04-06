@@ -13,8 +13,13 @@ import {
   MobileEventProps,
   CalendarType,
 } from '@/types';
-import { formatTime, isEventDeepEqual } from '@/utils';
+import {
+  formatTime,
+  isEventDeepEqual,
+  restoreVisualEventToCanonical,
+} from '@/utils';
 import { temporalToDate, dateToZonedDateTime } from '@/utils/temporal';
+import { dateToPlainDate } from '@/utils/temporalTypeGuards';
 
 import { Switch } from './components/Switch';
 import { TimePickerWheel } from './components/TimePickerWheel';
@@ -29,16 +34,30 @@ export const MobileEventDrawer = ({
   timeFormat = '24h',
 }: MobileEventProps) => {
   const { locale, t } = useLocale();
-  const readOnlyConfig = app.getReadOnlyConfig();
-  const isEditable = app.canMutateFromUI();
+  const readOnlyConfig = app.getReadOnlyConfig(draftEvent?.id) as {
+    draggable: boolean;
+    viewable: boolean;
+  };
+  const isEditable = app.canMutateFromUI(draftEvent?.id);
   const isViewable = readOnlyConfig.viewable !== false;
+
+  const [notes, setNotes] = useState('');
+
+  // Check if it's a subscribed calendar
+  const isSubscribed = useMemo(() => {
+    if (!draftEvent?.calendarId) return false;
+    const calendar = app.getCalendarRegistry().get(draftEvent.calendarId);
+    return !!calendar?.subscription;
+  }, [app, draftEvent?.calendarId]);
+
+  // If subscribed calendar and no notes, hide notes field
+  const shouldShowNotes = !isSubscribed || notes.trim() !== '';
 
   const [title, setTitle] = useState('');
   const [calendarId, setCalendarId] = useState('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [notes, setNotes] = useState('');
 
   // Independent visible month states for date pickers
   const [startVisibleMonth, setStartVisibleMonth] = useState(new Date());
@@ -166,13 +185,8 @@ export const MobileEventDrawer = ({
   const hasChanges = useMemo(() => {
     if (!isOpen || !draftEvent) return false;
 
-    let finalStart = new Date(startDate);
-    let finalEnd = new Date(endDate);
-
-    if (isAllDay) {
-      finalStart.setHours(0, 0, 0, 0);
-      finalEnd.setHours(0, 0, 0, 0);
-    }
+    const finalStart = new Date(startDate);
+    const finalEnd = new Date(endDate);
 
     const currentEvent: CalendarEvent = {
       ...draftEvent,
@@ -180,11 +194,18 @@ export const MobileEventDrawer = ({
       calendarId,
       allDay: isAllDay,
       description: notes,
-      start: dateToZonedDateTime(finalStart),
-      end: dateToZonedDateTime(finalEnd),
+      start: isAllDay
+        ? dateToPlainDate(finalStart)
+        : dateToZonedDateTime(finalStart, app.timeZone),
+      end: isAllDay
+        ? dateToPlainDate(finalEnd)
+        : dateToZonedDateTime(finalEnd, app.timeZone),
     };
 
-    return !isEventDeepEqual(draftEvent, currentEvent);
+    return !isEventDeepEqual(
+      draftEvent,
+      restoreVisualEventToCanonical(draftEvent, currentEvent, app.timeZone)
+    );
   }, [
     isOpen,
     draftEvent,
@@ -201,23 +222,28 @@ export const MobileEventDrawer = ({
   const handleSave = () => {
     if (!draftEvent) return;
 
-    let finalStart = new Date(startDate);
-    let finalEnd = new Date(endDate);
-
-    if (isAllDay) {
-      finalStart.setHours(0, 0, 0, 0);
-      finalEnd.setHours(0, 0, 0, 0);
-    }
+    const finalStart = new Date(startDate);
+    const finalEnd = new Date(endDate);
 
     const updated = {
       ...draftEvent,
       title,
       calendarId,
       allDay: isAllDay,
-      start: dateToZonedDateTime(finalStart),
-      end: dateToZonedDateTime(finalEnd),
+      start: isAllDay
+        ? dateToPlainDate(finalStart)
+        : dateToZonedDateTime(finalStart, app.timeZone),
+      end: isAllDay
+        ? dateToPlainDate(finalEnd)
+        : dateToZonedDateTime(finalEnd, app.timeZone),
     };
-    onSave(updated as CalendarEvent);
+    onSave(
+      restoreVisualEventToCanonical(
+        draftEvent,
+        updated as CalendarEvent,
+        app.timeZone
+      )
+    );
   };
 
   const toggleExpand = (
@@ -430,6 +456,9 @@ export const MobileEventDrawer = ({
                   onDateSelect={d => handleDateChange('start', d)}
                   onMonthChange={offset => handleMonthChange('start', offset)}
                   showHeader
+                  events={app.getEvents()}
+                  calendarRegistry={app.getCalendarRegistry()}
+                  timeZone={app.timeZone}
                 />
               </div>
             </div>
@@ -487,6 +516,9 @@ export const MobileEventDrawer = ({
                   onDateSelect={d => handleDateChange('end', d)}
                   onMonthChange={offset => handleMonthChange('end', offset)}
                   showHeader
+                  events={app.getEvents()}
+                  calendarRegistry={app.getCalendarRegistry()}
+                  timeZone={app.timeZone}
                 />
               </div>
             </div>
@@ -504,17 +536,19 @@ export const MobileEventDrawer = ({
           </div>
 
           {/* Notes */}
-          <div className='rounded-lg bg-white px-4 py-3 dark:bg-gray-900'>
-            <textarea
-              placeholder={t('notesPlaceholder')}
-              value={notes}
-              onChange={(
-                e: JSX.TargetedEvent<HTMLTextAreaElement, globalThis.Event>
-              ) => isEditable && setNotes(e.currentTarget.value)}
-              readOnly={!isEditable}
-              className='min-h-20 w-full bg-transparent text-base placeholder-gray-400 focus:outline-none'
-            />
-          </div>
+          {shouldShowNotes && (
+            <div className='rounded-lg bg-white px-4 py-3 dark:bg-gray-900'>
+              <textarea
+                placeholder={t('notesPlaceholder')}
+                value={notes}
+                onChange={(
+                  e: JSX.TargetedEvent<HTMLTextAreaElement, globalThis.Event>
+                ) => isEditable && setNotes(e.currentTarget.value)}
+                readOnly={!isEditable}
+                className='min-h-20 w-full bg-transparent text-base placeholder-gray-400 focus:outline-none'
+              />
+            </div>
+          )}
 
           {/* Delete button — only for existing events that can be edited */}
           {isEditable && isEditing && onEventDelete && draftEvent && (

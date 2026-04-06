@@ -36,6 +36,7 @@ export function TeamCalendar() {
 | `callbacks`                 | `CalendarCallbacks`         | 任意 | `{}`                                     | ビュー変更やイベント CRUD をフックするライフサイクルコールバック。                                                           |
 | `defaultView`               | `ViewType`                  | 任意 | `ViewType.WEEK`                          | 最初に表示するビュー。`views` に含まれている必要あり。                                                                       |
 | `initialDate`               | `Date`                      | 任意 | `new Date()`                             | フォーカスする基準日。ルーティングの状態などから差し替え可能。                                                               |
+| `timeZone`                  | `string`                    | 任意 | ユーザーのシステムタイムゾーン           | 全ビュー共通の表示 / 編集タイムゾーン。                                                                                      |
 | `switcherMode`              | `'buttons' \| 'select'`     | 任意 | `'buttons'`                              | ビルトインビュースイッチャーの表示方法。                                                                                     |
 | `calendars`                 | `CalendarType[]`            | 任意 | `[]`                                     | カテゴリや色の定義。`calendarId` と連携。                                                                                    |
 | `defaultCalendar`           | `string`                    | 任意 | 最初の可視カレンダー                     | 新規イベント作成時の既定カレンダー ID。                                                                                      |
@@ -106,6 +107,14 @@ const calendar = useCalendarApp({
 - 単一ビューのカレンダーでは必ず `defaultView` を明示的に設定してください。
 - `initialDate` はルーティング、ユーザー設定、またはサーバーデータから取得してマルチデバイス間の一貫性を保つことができます。
 
+### timeZone
+
+- `timeZone` は Day / Week / Month / Year 全体の主表示 / 編集タイムゾーンを定義します。
+- 未指定の場合、DayFlow はユーザーのシステムタイムゾーンを使います。
+- `timeZone` の変更は UI の再投影だけを行い、タイムゾーン変更そのものではイベントデータを書き換えません。
+- 編集系コールバックが返すのは canonical event のままです。UI 上で一時的に投影されたタイムゾーン値を、そのまま保存用データとして返すことはありません。
+- Day / Week の `secondaryTimeZone` は補助タイムライン専用で、アプリ全体の主タイムゾーンを置き換えるものではありません。
+
 ### switcherMode
 
 - `'buttons'`: デスクトップ向けの水平ボタン群。
@@ -115,6 +124,31 @@ const calendar = useCalendarApp({
 
 - `calendars` に `id`, `name`, `colors`, `darkColors`, `isVisible` などを定義すると、イベントが `calendarId` を通じてスタイルを引き継ぎます。
 - `defaultCalendar` を設定しない場合は最初に可視状態のカレンダーが使われます。
+
+**`CalendarType` のプロパティ：**
+
+| プロパティ     | 型                       | 必須   | 説明                                                             |
+| -------------- | ------------------------ | ------ | ---------------------------------------------------------------- |
+| `id`           | `string`                 | はい   | 一意の識別子（例：`'work'`、`'personal'`）。                     |
+| `name`         | `string`                 | はい   | UI に表示される名前。                                            |
+| `colors`       | `CalendarColors`         | はい   | ライトモードのカラーセット（下表参照）。                         |
+| `darkColors`   | `CalendarColors`         | いいえ | ダークモードのカラーセット；省略時は `colors` にフォールバック。 |
+| `description`  | `string`                 | いいえ | 任意の説明文。                                                   |
+| `icon`         | `string`                 | いいえ | カレンダー名の横に表示する絵文字またはアイコン名。               |
+| `isVisible`    | `boolean`                | いいえ | このカレンダーのイベントを表示するか。デフォルト `true`。        |
+| `isDefault`    | `boolean`                | いいえ | システムデフォルトカレンダーとしてマークする。                   |
+| `readOnly`     | `boolean`                | いいえ | ドラッグ・リサイズ・編集 UI を無効化する。                       |
+| `source`       | `string`                 | いいえ | 取得元ラベル（例：`'Google Calendar'`、`'iCloud'`）。            |
+| `subscription` | `{ url, status, meta? }` | いいえ | ICS / リモートカレンダーのサブスクリプションメタデータ。         |
+
+**`CalendarColors` のプロパティ：**
+
+| プロパティ           | 型       | 説明                               |
+| -------------------- | -------- | ---------------------------------- |
+| `eventColor`         | `string` | イベントの背景色（通常は半透明）。 |
+| `eventSelectedColor` | `string` | 選択時のイベント背景色。           |
+| `lineColor`          | `string` | アクセント / ボーダーカラー。      |
+| `textColor`          | `string` | イベントのテキストカラー。         |
 
 ### theme
 

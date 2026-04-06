@@ -6,15 +6,17 @@ import {
   useMemo,
   useContext,
 } from 'preact/hooks';
+import { Temporal } from 'temporal-polyfill';
 
 import { EventContextMenu } from '@/components/contextMenu';
 import { ContentSlot } from '@/renderer/ContentSlot';
 import { CustomRenderingContext } from '@/renderer/CustomRenderingContext';
-import { Event, ViewType } from '@/types';
+import { Event, ViewType, ReadOnlyConfig } from '@/types';
 import {
   getSelectedBgColor,
   getEventBgColor,
   getEventTextColor,
+  temporalToVisualTemporal,
 } from '@/utils';
 
 import { EventContent } from './components/EventContent';
@@ -33,6 +35,8 @@ import {
   getClickedDayIndex,
   getEventClasses,
 } from './utils';
+
+const HIGHLIGHT_POP_DURATION_MS = 650;
 
 const CalendarEvent = ({
   event,
@@ -75,10 +79,24 @@ const CalendarEvent = ({
   disableDefaultStyle = false,
   renderVisualContent,
   resizeHandleOrientation,
+  appTimeZone,
 }: CalendarEventProps) => {
   const customRenderingStore = useContext(CustomRenderingContext);
   const isTouchEnabled = enableTouch ?? isMobile;
   const isYearView = viewType === ViewType.YEAR;
+
+  // Visual event for display (shifted walls)
+  const visualEvent = useMemo(() => {
+    if (!appTimeZone || event.allDay) return event;
+    const start = temporalToVisualTemporal(
+      event.start as Temporal.PlainDate,
+      appTimeZone
+    );
+    const end = event.end
+      ? temporalToVisualTemporal(event.end as Temporal.PlainDate, appTimeZone)
+      : undefined;
+    return { ...event, start, end } as Event;
+  }, [event, appTimeZone]);
   const [contextMenuPosition, setContextMenuPosition] = useState<{
     x: number;
     y: number;
@@ -103,8 +121,8 @@ const CalendarEvent = ({
   const showDetailPanelForClickOutside =
     showDetailPanel && !customEventDetailDialog;
 
-  const readOnlyConfig = app?.getReadOnlyConfig();
-  const isEditable = app?.canMutateFromUI() ?? false;
+  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as ReadOnlyConfig;
+  const isEditable = app?.canMutateFromUI(event.id) ?? false;
   const canOpenDetail = readOnlyConfig?.viewable !== false;
   const isDraggable = readOnlyConfig?.draggable !== false;
 
@@ -199,6 +217,7 @@ const CalendarEvent = ({
     hasPendingSelection,
   } = useEventActions({
     event,
+    timingEvent: visualEvent,
     viewType,
     isAllDay,
     isMultiDay,
@@ -233,6 +252,7 @@ const CalendarEvent = ({
   // Styles Hook
   const { calculateEventStyle } = useEventStyles({
     event,
+    timingEvent: visualEvent,
     layout,
     isAllDay,
     allDayHeight,
@@ -261,6 +281,7 @@ const CalendarEvent = ({
   // Visibility Hook
   useEventVisibility({
     event,
+    timingEvent: visualEvent,
     isEventSelected,
     showDetailPanel,
     eventRef,
@@ -353,7 +374,7 @@ const CalendarEvent = ({
       setIsPopping(true);
       const timer = setTimeout(() => {
         setIsPopping(false);
-      }, 300);
+      }, HIGHLIGHT_POP_DURATION_MS);
       return () => {
         clearTimeout(timer);
         setIsPopping(false);
@@ -453,7 +474,7 @@ const CalendarEvent = ({
         onTouchEnd={handleTouchEnd}
       >
         <EventContent
-          event={event}
+          event={visualEvent}
           viewType={viewType}
           isAllDay={isAllDay}
           isMultiDay={isMultiDay}
@@ -478,6 +499,7 @@ const CalendarEvent = ({
           customRenderingStore={customRenderingStore}
           eventContentSlotArgs={eventContentSlotArgs}
           timeFormat={timeFormat}
+          appTimeZone={appTimeZone}
           renderVisualContent={renderVisualContent}
           resizeHandleOrientation={resizeHandleOrientation}
         />

@@ -11,6 +11,7 @@ import {
   ICalendarApp,
   ViewType,
 } from '@/types';
+import { getTodayInTimeZone } from '@/utils';
 
 import { analyzeMultiDayEventsForRow } from './utils';
 import { YearDayCell } from './YearDayCell';
@@ -41,6 +42,7 @@ interface YearRowComponentProps {
   customDetailPanelContent?: EventDetailContentRenderer;
   customEventDetailDialog?: EventDetailDialogRenderer;
   onContextMenu: (menu: { x: number; y: number; date: Date } | null) => void;
+  appTimeZone?: string;
 }
 
 export const YearRowComponent = memo(
@@ -66,11 +68,15 @@ export const YearRowComponent = memo(
     customDetailPanelContent,
     customEventDetailDialog,
     onContextMenu,
+    appTimeZone,
   }: YearRowComponentProps) => {
     const MAX_VISIBLE_ROWS = 3;
     const HEADER_HEIGHT = 26;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = useMemo(() => {
+      const now = getTodayInTimeZone(appTimeZone);
+      now.setHours(0, 0, 0, 0);
+      return now;
+    }, [appTimeZone]);
 
     const handleContextMenu = useCallback(
       (e: MouseEvent, date: Date) => {
@@ -94,9 +100,16 @@ export const YearRowComponent = memo(
           events,
           rowDays,
           columnsPerRow,
-          app.state.allDaySortComparator
+          app.state.allDaySortComparator,
+          appTimeZone
         ),
-      [events, rowDays, columnsPerRow, app.state.allDaySortComparator]
+      [
+        events,
+        rowDays,
+        columnsPerRow,
+        app.state.allDaySortComparator,
+        appTimeZone,
+      ]
     );
 
     const { visibleSegments, moreCounts } = useMemo(() => {
@@ -220,6 +233,7 @@ export const YearRowComponent = memo(
                     app.updateEvent(updated.id, updated)
                   }
                   onEventDelete={id => app.deleteEvent(id)}
+                  appTimeZone={appTimeZone}
                 />
               </div>
             ))}

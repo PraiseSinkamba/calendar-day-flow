@@ -89,6 +89,7 @@ export interface DayViewConfig extends ViewFactoryConfig {
   showAllDay?: boolean;
   scrollToCurrentTime?: boolean;
   secondaryTimeZone?: TimeZoneValue;
+  showEventDots?: boolean;
 }
 
 /**
@@ -100,6 +101,7 @@ export interface WeekViewConfig extends ViewFactoryConfig {
   startOfWeek?: number;
   scrollToCurrentTime?: boolean;
   secondaryTimeZone?: TimeZoneValue;
+  showEventDots?: boolean;
 }
 
 /**
@@ -126,6 +128,7 @@ export interface MonthViewConfig extends ViewFactoryConfig {
   snapToMonth?: boolean;
   /** Scroll / navigation behavior for the month view */
   scroll?: MonthScrollConfig;
+  showEventDots?: boolean;
 }
 
 /**
@@ -137,12 +140,9 @@ export interface YearViewConfig extends ViewFactoryConfig {
   startOfWeek?: number;
   /** Scroll / navigation behavior for the month view */
   scroll?: MonthScrollConfig;
+  showEventDots?: boolean;
   /**
    * Grid mode: action when a date cell is clicked.
-   * - 'popup' (default): show a popup with events for that day
-   * - 'day-view': navigate to the Day View
-   * - 'none': no action
-   * - function: custom handler
    */
   gridDateClick?:
     | 'popup'

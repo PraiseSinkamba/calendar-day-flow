@@ -47,12 +47,98 @@ const createTimedEvent = (
   }),
 });
 
+const createZonedTimedEvent = (
+  id: string,
+  title: string,
+  start: string,
+  end: string
+) => ({
+  id,
+  title,
+  allDay: false,
+  calendarId: 'work',
+  start: Temporal.ZonedDateTime.from(start),
+  end: Temporal.ZonedDateTime.from(end),
+});
+
 const sortByCalendarId = (
   a: { calendarId?: string },
   b: { calendarId?: string }
 ) => a.calendarId!.localeCompare(b.calendarId!);
 
 describe('WeekComponent', () => {
+  it('renders month multi-day timed event times in app timezone', () => {
+    const event = createZonedTimedEvent(
+      'brainstorm',
+      'Brainstorm',
+      '2026-05-04T12:30:00+00:00[UTC]',
+      '2026-05-04T15:30:00+00:00[UTC]'
+    );
+
+    const app = new CalendarApp({
+      views: [],
+      plugins: [],
+      events: [event],
+      defaultView: ViewType.MONTH,
+      timeZone: 'Australia/Sydney',
+      calendars: [
+        {
+          id: 'work',
+          name: 'Work',
+          colors: {
+            lineColor: '#2563eb',
+            eventColor: '#dbeafe',
+            eventSelectedColor: '#bfdbfe',
+            textColor: '#1e3a8a',
+          },
+        },
+      ],
+    });
+
+    const calendarRef = { current: document.createElement('div') } as {
+      current: HTMLDivElement;
+    };
+
+    const { container } = render(
+      <WeekComponent
+        currentMonth='May'
+        currentYear={2026}
+        newlyCreatedEventId={null}
+        screenSize='desktop'
+        isScrolling={false}
+        isDragging={false}
+        showWeekNumbers={false}
+        item={{
+          index: 0,
+          weekData: generateWeekData(new Date(2026, 4, 4)),
+          top: 0,
+          height: 113,
+        }}
+        weekHeight={113}
+        events={[event]}
+        dragState={{
+          active: false,
+          mode: null,
+          eventId: null,
+          targetDate: null,
+          startDate: null,
+          endDate: null,
+        }}
+        calendarRef={calendarRef}
+        onEventUpdate={jest.fn()}
+        onEventDelete={jest.fn()}
+        onDetailPanelOpen={jest.fn()}
+        app={app}
+        appTimeZone='Australia/Sydney'
+      />
+    );
+
+    expect(container.textContent).toContain('22:30');
+    expect(container.textContent).toContain('ends 01:30');
+    expect(container.textContent).not.toContain('12:30');
+    expect(container.textContent).not.toContain('ends 15:30');
+  });
+
   it('lets each month cell decide independently whether to show 3 rows plus more or 4 rows', () => {
     const onEventUpdate = jest.fn();
     const onEventDelete = jest.fn();
@@ -105,9 +191,9 @@ describe('WeekComponent', () => {
           index: 0,
           weekData: generateWeekData(new Date(2026, 2, 9)),
           top: 0,
-          height: 119,
+          height: 113,
         }}
-        weekHeight={119}
+        weekHeight={113}
         events={events}
         dragState={{
           active: false,
@@ -170,11 +256,11 @@ describe('WeekComponent', () => {
       current: HTMLDivElement;
     };
 
-    // Set weekHeight such that availableHeight is 88px.
-    // 88 / 17 = 5.17, so floor is 5. But capped at 4. So maxSlots = 4.
-    // (88 - 20) / 17 = 4, so maxSlotsWithMore = 4.
-    // We want to verify that it instead uses 3 for maxSlotsWithMore.
-    const weekHeight = 88 + 33; // 121
+    // Set weekHeight such that availableHeight is 80px.
+    // 80 / 17 = 4.7, floor = 4. So maxSlots = 4.
+    // (80 - 20) / 17 = 3.5, floor = 3. So maxSlotsWithMoreRaw = 3.
+    // We want to verify that maxSlotsWithMore = min(3, 4-1) = 3, not 4.
+    const weekHeight = 80 + 33; // 113
 
     const { container } = render(
       <WeekComponent
@@ -252,7 +338,8 @@ describe('WeekComponent', () => {
     };
 
     // Set weekHeight such that maxSlots = 4 and maxSlotsWithMore = 3
-    const weekHeight = 88 + 33;
+    // availableHeight = 80: floor(80/17) = 4, floor((80-20)/17) = 3
+    const weekHeight = 80 + 33; // 113
 
     const { container } = render(
       <WeekComponent

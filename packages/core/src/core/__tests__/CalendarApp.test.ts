@@ -4,6 +4,7 @@ import { CalendarApp } from '@/core/CalendarApp';
 import { createDayView } from '@/factories/createDayView';
 import { createMonthView } from '@/factories/createMonthView';
 import { createWeekView } from '@/factories/createWeekView';
+import { createYearView } from '@/factories/createYearView';
 import { ViewType } from '@/types';
 
 describe('CalendarApp', () => {
@@ -161,6 +162,79 @@ describe('CalendarApp', () => {
       expect(readOnlyApp.canMutateFromUI()).toBe(false);
       expect(partialReadOnlyApp.canMutateFromUI()).toBe(false);
     });
+
+    it('canMutateFromUI should respect per-calendar read-only status', () => {
+      const app = new CalendarApp({
+        views: [],
+        plugins: [],
+        events: [
+          {
+            id: 'event-1',
+            title: 'Subscribed Event',
+            start: Temporal.Now.plainDateISO(),
+            end: Temporal.Now.plainDateISO(),
+            calendarId: 'sub-cal',
+          },
+          {
+            id: 'event-2',
+            title: 'Regular Event',
+            start: Temporal.Now.plainDateISO(),
+            end: Temporal.Now.plainDateISO(),
+            calendarId: 'reg-cal',
+          },
+        ],
+        calendars: [
+          {
+            id: 'sub-cal',
+            name: 'Subscribed',
+            colors: {
+              eventColor: '#000',
+              eventSelectedColor: '#000',
+              lineColor: '#000',
+              textColor: '#000',
+            },
+            subscription: {
+              url: 'http://example.com/cal.ics',
+              status: 'ready',
+            },
+          },
+          {
+            id: 'reg-cal',
+            name: 'Regular',
+            colors: {
+              eventColor: '#000',
+              eventSelectedColor: '#000',
+              lineColor: '#000',
+              textColor: '#000',
+            },
+          },
+        ],
+        readOnly: false,
+      });
+
+      // Default subscribed calendar is read-only
+      expect(app.canMutateFromUI('sub-cal')).toBe(false);
+      expect(app.canMutateFromUI('event-1')).toBe(false);
+
+      // Regular calendar is editable
+      expect(app.canMutateFromUI('reg-cal')).toBe(true);
+      expect(app.canMutateFromUI('event-2')).toBe(true);
+
+      // Explicit read-only on regular calendar
+      app.updateCalendar('reg-cal', { readOnly: true });
+      expect(app.canMutateFromUI('reg-cal')).toBe(false);
+      expect(app.canMutateFromUI('event-2')).toBe(false);
+
+      // Explicit override for subscribed calendar
+      app.updateCalendar('sub-cal', { readOnly: false });
+      expect(app.canMutateFromUI('sub-cal')).toBe(true);
+      expect(app.canMutateFromUI('event-1')).toBe(true);
+
+      // Global read-only overrides everything
+      app.updateConfig({ readOnly: true });
+      expect(app.canMutateFromUI('sub-cal')).toBe(false);
+      expect(app.canMutateFromUI('reg-cal')).toBe(false);
+    });
   });
 
   describe('View Management', () => {
@@ -268,6 +342,91 @@ describe('CalendarApp', () => {
   });
 
   describe('Config Updates', () => {
+    it('updates day/week secondaryTimeZone and month/year visualTimeZone independently', () => {
+      const app = new CalendarApp({
+        views: [
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        plugins: [],
+        events: [],
+      });
+
+      app.updateConfig({
+        views: [
+          createDayView({ secondaryTimeZone: 'Asia/Tokyo' }),
+          createWeekView({ secondaryTimeZone: 'Asia/Tokyo' }),
+          createMonthView({}),
+          createYearView({}),
+        ],
+      });
+
+      expect(app.getViewConfig(ViewType.DAY)).toMatchObject({
+        secondaryTimeZone: 'Asia/Tokyo',
+      });
+      expect(app.getViewConfig(ViewType.WEEK)).toMatchObject({
+        secondaryTimeZone: 'Asia/Tokyo',
+      });
+
+      app.updateConfig({
+        views: [
+          createDayView({ secondaryTimeZone: 'America/New_York' }),
+          createWeekView({ secondaryTimeZone: 'America/New_York' }),
+          createMonthView({}),
+          createYearView({}),
+        ],
+      });
+
+      expect(app.getViewConfig(ViewType.DAY)).toMatchObject({
+        secondaryTimeZone: 'America/New_York',
+      });
+      expect(app.getViewConfig(ViewType.WEEK)).toMatchObject({
+        secondaryTimeZone: 'America/New_York',
+      });
+    });
+
+    it('keeps navigation and app.state in sync after repeated view config updates', () => {
+      const app = new CalendarApp({
+        views: [
+          createDayView(),
+          createWeekView(),
+          createMonthView(),
+          createYearView(),
+        ],
+        plugins: [],
+        events: [],
+        defaultView: ViewType.MONTH,
+      });
+
+      app.updateConfig({
+        views: [
+          createDayView({ secondaryTimeZone: 'Asia/Tokyo' }),
+          createWeekView({ secondaryTimeZone: 'Asia/Tokyo' }),
+          createMonthView(),
+          createYearView(),
+        ],
+      });
+
+      app.updateConfig({
+        views: [
+          createDayView({ secondaryTimeZone: 'America/New_York' }),
+          createWeekView({ secondaryTimeZone: 'America/New_York' }),
+          createMonthView(),
+          createYearView(),
+        ],
+      });
+
+      app.changeView(ViewType.WEEK);
+
+      expect(app.state.currentView).toBe(ViewType.WEEK);
+      expect(app.getCurrentView().type).toBe(ViewType.WEEK);
+      expect(app.getViewConfig(ViewType.WEEK)).toMatchObject({
+        secondaryTimeZone: 'America/New_York',
+      });
+    });
+
     it('does not trigger a render when allDaySortComparator is unchanged', () => {
       const onRender = jest.fn();
       const comparator = jest.fn(() => 0);

@@ -24,6 +24,7 @@ import { isEventDeepEqual } from '@/utils/eventUtils';
 import { logger } from '@/utils/logger';
 import { isPlainDate } from '@/utils/temporal';
 import { resolveAppliedTheme } from '@/utils/themeUtils';
+import { restoreVisualEventToCanonical } from '@/utils/timeUtils';
 
 import { CalendarOption, CalendarPicker } from './CalendarPicker';
 import { LoadingButton } from './LoadingButton';
@@ -66,8 +67,15 @@ const DefaultEventDetailPanel = ({
 
     if (isEventDeepEqual(committedEvent, latestDraftEvent)) return;
 
-    committedEventRef.current = latestDraftEvent;
-    const updateResult = onEventUpdate(latestDraftEvent);
+    const canonicalDraftEvent = restoreVisualEventToCanonical(
+      committedEvent,
+      latestDraftEvent,
+      app?.timeZone
+    );
+
+    committedEventRef.current = canonicalDraftEvent;
+    draftEventRef.current = canonicalDraftEvent;
+    const updateResult = onEventUpdate(canonicalDraftEvent);
     if (updateResult) {
       Promise.resolve(updateResult).catch(error => {
         logger.error(
@@ -76,7 +84,7 @@ const DefaultEventDetailPanel = ({
         );
       });
     }
-  }, [onEventUpdate]);
+  }, [app?.timeZone, onEventUpdate]);
 
   const applyDraftEventUpdate = useCallback(
     (nextDraftEvent: Event) => {
@@ -130,23 +138,10 @@ const DefaultEventDetailPanel = ({
     [commitDraftChanges]
   );
 
-  const eventTimeZone = useMemo(() => {
-    if (!isPlainDate(draftEvent.start)) {
-      return (
-        (draftEvent.start as Temporal.ZonedDateTime).timeZoneId ||
-        Temporal.Now.timeZoneId()
-      );
-    }
-
-    if (draftEvent.end && !isPlainDate(draftEvent.end)) {
-      return (
-        (draftEvent.end as Temporal.ZonedDateTime).timeZoneId ||
-        Temporal.Now.timeZoneId()
-      );
-    }
-
-    return Temporal.Now.timeZoneId();
-  }, [draftEvent.end, draftEvent.start]);
+  const eventTimeZone = useMemo(
+    () => app?.timeZone ?? Temporal.Now.timeZoneId(),
+    [app]
+  );
 
   // Get visible calendar type options
   const colorOptions: CalendarOption[] = useMemo(() => {
@@ -164,9 +159,24 @@ const DefaultEventDetailPanel = ({
     appliedTheme === 'dark' ||
     (typeof document !== 'undefined' &&
       document.documentElement.classList.contains('dark'));
-  const isEditable = app?.canMutateFromUI() ?? false;
-  const isViewable = app?.getReadOnlyConfig().viewable !== false;
+  const isEditable = app?.canMutateFromUI(event.id) ?? false;
+  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as {
+    draggable: boolean;
+    viewable: boolean;
+  };
+  const isViewable = readOnlyConfig?.viewable !== false;
   const isDraftAllDay = !!draftEvent.allDay;
+
+  // Check if it's a subscribed calendar
+  const isSubscribed = useMemo(() => {
+    if (!event.calendarId) return false;
+    const calendar = app?.getCalendarRegistry().get(event.calendarId);
+    return !!calendar?.subscription;
+  }, [app, event.calendarId]);
+
+  // If subscribed calendar and no notes, hide notes field
+  const shouldShowNotes =
+    !isSubscribed || (draftEvent.description || '').trim() !== '';
 
   if (!isViewable) return null;
 
@@ -195,13 +205,14 @@ const DefaultEventDetailPanel = ({
     const plainDate = isPlainDate(draftEvent.start)
       ? draftEvent.start
       : draftEvent.start.toPlainDate();
+    const tz = app?.timeZone ?? Temporal.Now.timeZoneId();
     const start = Temporal.ZonedDateTime.from({
       year: plainDate.year,
       month: plainDate.month,
       day: plainDate.day,
       hour: 9,
       minute: 0,
-      timeZone: Temporal.Now.timeZoneId(),
+      timeZone: tz,
     });
     const end = Temporal.ZonedDateTime.from({
       year: plainDate.year,
@@ -209,7 +220,7 @@ const DefaultEventDetailPanel = ({
       day: plainDate.day,
       hour: 10,
       minute: 0,
-      timeZone: Temporal.Now.timeZoneId(),
+      timeZone: tz,
     });
 
     applyDraftEventUpdate({
@@ -470,33 +481,35 @@ const DefaultEventDetailPanel = ({
         </div>
       )}
 
-      <div className='mb-3'>
-        <span className='mb-1 block text-xs text-gray-600 dark:text-gray-300'>
-          {t('note')}
-        </span>
-        <textarea
-          id={`event-note-${draftEvent.id}`}
-          name='note'
-          value={draftEvent.description ?? ''}
-          readOnly={!isEditable || isLoading}
-          disabled={!isEditable || isLoading}
-          onChange={e =>
-            applyDraftEventUpdate({
-              ...draftEvent,
-              description: (e.target as HTMLTextAreaElement).value,
-            })
-          }
-          onInput={e =>
-            applyDraftEventUpdate({
-              ...draftEvent,
-              description: (e.target as HTMLTextAreaElement).value,
-            })
-          }
-          rows={3}
-          className='df-focus-ring w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
-          placeholder={t('addNotePlaceholder')}
-        />
-      </div>
+      {shouldShowNotes && (
+        <div className='mb-3'>
+          <span className='mb-1 block text-xs text-gray-600 dark:text-gray-300'>
+            {t('note')}
+          </span>
+          <textarea
+            id={`event-note-${draftEvent.id}`}
+            name='note'
+            value={draftEvent.description ?? ''}
+            readOnly={!isEditable || isLoading}
+            disabled={!isEditable || isLoading}
+            onChange={e =>
+              applyDraftEventUpdate({
+                ...draftEvent,
+                description: (e.target as HTMLTextAreaElement).value,
+              })
+            }
+            onInput={e =>
+              applyDraftEventUpdate({
+                ...draftEvent,
+                description: (e.target as HTMLTextAreaElement).value,
+              })
+            }
+            rows={3}
+            className='df-focus-ring w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+            placeholder={t('addNotePlaceholder')}
+          />
+        </div>
+      )}
 
       {isEditable && (
         <div className='flex space-x-2'>

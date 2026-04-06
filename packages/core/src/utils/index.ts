@@ -15,6 +15,8 @@ export {
   isZonedDateTime,
   // Temporal to Date conversions
   temporalToDate,
+  temporalToVisualDate,
+  temporalToVisualTemporal,
   plainDateToDate,
   plainDateTimeToDate,
   // Date to Temporal conversions
@@ -48,6 +50,7 @@ export * from './rangePicker';
 
 // Style utilities
 export * from './styleUtils';
+export * from './timeUtils';
 
 // Theme utilities
 export * from './themeUtils';
@@ -70,3 +73,4 @@ export * from './allDaySort';
 
 // Cross-region drag helpers
 export * from './crossRegionDrag';
+export * from './timeZoneUtils';

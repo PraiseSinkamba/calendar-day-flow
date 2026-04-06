@@ -24,11 +24,14 @@ import {
   ICalendarApp,
 } from '@/types';
 import { VirtualWeekItem } from '@/types/monthView';
-import { getWeekNumber, scrollbarTakesSpace } from '@/utils';
+import {
+  getWeekNumber,
+  scrollbarTakesSpace,
+  temporalToVisualDate,
+} from '@/utils';
 import { createAllDayDisplayComparator } from '@/utils/allDaySort';
 import { extractHourFromDate } from '@/utils/helpers';
 import { logger } from '@/utils/logger';
-import { temporalToDate } from '@/utils/temporal';
 
 import { analyzeMultiDayEventsForWeek } from './util';
 
@@ -96,6 +99,7 @@ interface WeekComponentProps {
   calendarSignature?: string;
   app: ICalendarApp;
   enableTouch?: boolean;
+  appTimeZone?: string;
 }
 
 // Constants
@@ -213,7 +217,11 @@ const organizeMultiDaySegments = (
 };
 
 // Build render event list (multi-day regular events will be rendered through segment, skipping here)
-const constructRenderEvents = (events: Event[], weekStart: Date): Event[] => {
+const constructRenderEvents = (
+  events: Event[],
+  weekStart: Date,
+  appTimeZone?: string
+): Event[] => {
   const renderEvents: Event[] = [];
 
   // Calculate week end time
@@ -228,8 +236,10 @@ const constructRenderEvents = (events: Event[], weekStart: Date): Event[] => {
       return; // Skip invalid events
     }
 
-    const start = temporalToDate(event.start);
-    const end = temporalToDate(event.end);
+    const start = temporalToVisualDate(event.start, appTimeZone);
+    const end = event.end
+      ? temporalToVisualDate(event.end, appTimeZone)
+      : start;
     const startDate = new Date(start);
     startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(end);
@@ -369,6 +379,7 @@ const WeekComponent = memo(
     onCalendarDragOver,
     app,
     enableTouch,
+    appTimeZone,
   }: WeekComponentProps) => {
     const { t, locale } = useLocale();
     const [shouldShowMonthTitle, setShouldShowMonthTitle] = useState(false);
@@ -403,16 +414,12 @@ const WeekComponent = memo(
       const availableHeight = weekHeight - MULTI_DAY_TOP_OFFSET;
       if (availableHeight <= 0) return { maxSlots: 0, maxSlotsWithMore: 0 };
 
-      const hardCap = 4;
-      const maxSlots = Math.min(
-        hardCap,
-        Math.floor(availableHeight / ROW_SPACING)
-      );
+      const maxSlots = Math.floor(availableHeight / ROW_SPACING);
 
       const spaceForMore = availableHeight - MORE_TEXT_HEIGHT;
-      const maxSlotsWithMoreRaw = Math.min(
-        hardCap,
-        Math.max(0, Math.floor(spaceForMore / ROW_SPACING))
+      const maxSlotsWithMoreRaw = Math.max(
+        0,
+        Math.floor(spaceForMore / ROW_SPACING)
       );
 
       // Ensure maxSlotsWithMore is always at most maxSlots - 1 to leave room for the "+ x more" indicator
@@ -468,14 +475,20 @@ const WeekComponent = memo(
 
     // Analyze multi-day events for the current week
     const multiDaySegments = useMemo(
-      () => analyzeMultiDayEventsForWeek(events, weekData.startDate),
-      [events, weekData.startDate]
+      () =>
+        analyzeMultiDayEventsForWeek(
+          events,
+          weekData.startDate,
+          7,
+          appTimeZone
+        ),
+      [events, weekData.startDate, appTimeZone]
     );
 
     // Build render events
     const constructedRenderEvents = useMemo(
-      () => constructRenderEvents(events, weekData.startDate),
-      [events, weekData.startDate]
+      () => constructRenderEvents(events, weekData.startDate, appTimeZone),
+      [events, weekData.startDate, appTimeZone]
     );
 
     // Pre-compute events grouped by day to replace 7× O(n) filter calls on every render
@@ -487,10 +500,15 @@ const WeekComponent = memo(
           dayDateStr,
           constructedRenderEvents.filter(event => {
             if (!event.start || !event.end) {
-              return temporalToDate(event.start).toDateString() === dayDateStr;
+              return (
+                temporalToVisualDate(
+                  event.start,
+                  appTimeZone
+                ).toDateString() === dayDateStr
+              );
             }
-            const startDate = temporalToDate(event.start);
-            const endDate = temporalToDate(event.end);
+            const startDate = temporalToVisualDate(event.start, appTimeZone);
+            const endDate = temporalToVisualDate(event.end, appTimeZone);
             if (!event.allDay) {
               const endHasTime =
                 endDate.getHours() !== 0 ||
@@ -512,7 +530,7 @@ const WeekComponent = memo(
         );
       });
       return map;
-    }, [constructedRenderEvents, weekData.days]);
+    }, [constructedRenderEvents, weekData.days, appTimeZone]);
 
     // Organize multi-day event segments
     const organizedMultiDaySegments = useMemo(
@@ -832,6 +850,7 @@ const WeekComponent = memo(
               app={app}
               isMobile={screenSize !== 'desktop'}
               enableTouch={enableTouch}
+              appTimeZone={appTimeZone}
             />
           );
           timedEventIndex++;
@@ -1053,6 +1072,7 @@ const WeekComponent = memo(
                             app={app}
                             isMobile={screenSize !== 'desktop'}
                             enableTouch={enableTouch}
+                            appTimeZone={appTimeZone}
                           />
                         ))}
                     </div>

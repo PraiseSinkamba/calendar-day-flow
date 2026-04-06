@@ -81,4 +81,6 @@ export interface CalendarEventProps {
   ) => ComponentChildren;
   /** Override resize handle orientation for custom views */
   resizeHandleOrientation?: 'vertical' | 'horizontal';
+  /** App-level timezone used to project event times for display (Month/Year view). */
+  appTimeZone?: string;
 }

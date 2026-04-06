@@ -10,6 +10,7 @@ import { ICalendarApp } from '@/types';
 import { EventDetailDialogProps } from '@/types/eventDetail';
 import { isEventDeepEqual } from '@/utils/eventUtils';
 import { isPlainDate } from '@/utils/temporal';
+import { restoreVisualEventToCanonical } from '@/utils/timeUtils';
 
 import { CalendarPicker, CalendarOption } from './CalendarPicker';
 import { LoadingButton } from './LoadingButton';
@@ -62,7 +63,9 @@ const DefaultEventDetailDialog = ({
     if (isSaving || isDeleting) return;
     setIsSaving(true);
     try {
-      await onEventUpdate(editedEvent);
+      await onEventUpdate(
+        restoreVisualEventToCanonical(event, editedEvent, app?.timeZone)
+      );
       onClose();
     } finally {
       setIsSaving(false);
@@ -101,13 +104,14 @@ const DefaultEventDetailDialog = ({
     const plainDate = isPlainDate(editedEvent.start)
       ? editedEvent.start
       : editedEvent.start.toPlainDate();
+    const tz = app?.timeZone ?? Temporal.Now.timeZoneId();
     const start = Temporal.ZonedDateTime.from({
       year: plainDate.year,
       month: plainDate.month,
       day: plainDate.day,
       hour: 9,
       minute: 0,
-      timeZone: Temporal.Now.timeZoneId(),
+      timeZone: tz,
     });
     const end = Temporal.ZonedDateTime.from({
       year: plainDate.year,
@@ -115,7 +119,7 @@ const DefaultEventDetailDialog = ({
       day: plainDate.day,
       hour: 10,
       minute: 0,
-      timeZone: Temporal.Now.timeZoneId(),
+      timeZone: tz,
     });
     setEditedEvent({
       ...editedEvent,
@@ -125,23 +129,10 @@ const DefaultEventDetailDialog = ({
     });
   };
 
-  const eventTimeZone = useMemo(() => {
-    if (!isPlainDate(editedEvent.start)) {
-      return (
-        (editedEvent.start as Temporal.ZonedDateTime).timeZoneId ||
-        Temporal.Now.timeZoneId()
-      );
-    }
-
-    if (editedEvent.end && !isPlainDate(editedEvent.end)) {
-      return (
-        (editedEvent.end as Temporal.ZonedDateTime).timeZoneId ||
-        Temporal.Now.timeZoneId()
-      );
-    }
-
-    return Temporal.Now.timeZoneId();
-  }, [editedEvent.end, editedEvent.start]);
+  const eventTimeZone = useMemo(
+    () => app?.timeZone ?? Temporal.Now.timeZoneId(),
+    [app]
+  );
 
   const handleAllDayRangeChange = (
     nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]
@@ -154,9 +145,24 @@ const DefaultEventDetailDialog = ({
     });
   };
 
-  const isEditable = app?.canMutateFromUI() ?? false;
-  const isViewable = app?.getReadOnlyConfig().viewable !== false;
+  const isEditable = app?.canMutateFromUI(event.id) ?? false;
+  const readOnlyConfig = app?.getReadOnlyConfig(event.id) as {
+    draggable: boolean;
+    viewable: boolean;
+  };
+  const isViewable = readOnlyConfig?.viewable !== false;
   const isPending = isSaving || isDeleting;
+
+  // Check if it's a subscribed calendar
+  const isSubscribed = useMemo(() => {
+    if (!event.calendarId) return false;
+    const calendar = app?.getCalendarRegistry().get(event.calendarId);
+    return !!calendar?.subscription;
+  }, [app, event.calendarId]);
+
+  // If subscribed calendar and no notes, hide notes field
+  const shouldShowNotes =
+    !isSubscribed || (editedEvent.description || '').trim() !== '';
 
   if (!isOpen || !isViewable) return null;
 
@@ -306,27 +312,29 @@ const DefaultEventDetailDialog = ({
             </div>
           )}
 
-          <div className='mb-4'>
-            <span className='mb-1 block text-xs text-gray-600 dark:text-gray-300'>
-              {t('note')}
-            </span>
-            <textarea
-              id={`event-dialog-note-${editedEvent.id}`}
-              name='note'
-              value={editedEvent.description ?? ''}
-              readOnly={!isEditable || isPending}
-              disabled={!isEditable || isPending}
-              onChange={e =>
-                setEditedEvent({
-                  ...editedEvent,
-                  description: (e.target as HTMLTextAreaElement).value,
-                })
-              }
-              rows={4}
-              className='df-focus-ring w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
-              placeholder={t('addNotePlaceholder')}
-            />
-          </div>
+          {shouldShowNotes && (
+            <div className='mb-4'>
+              <span className='mb-1 block text-xs text-gray-600 dark:text-gray-300'>
+                {t('note')}
+              </span>
+              <textarea
+                id={`event-dialog-note-${editedEvent.id}`}
+                name='note'
+                value={editedEvent.description ?? ''}
+                readOnly={!isEditable || isPending}
+                disabled={!isEditable || isPending}
+                onChange={e =>
+                  setEditedEvent({
+                    ...editedEvent,
+                    description: (e.target as HTMLTextAreaElement).value,
+                  })
+                }
+                rows={4}
+                className='df-focus-ring w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+                placeholder={t('addNotePlaceholder')}
+              />
+            </div>
+          )}
 
           {isEditable && (
             <div className='flex space-x-2'>

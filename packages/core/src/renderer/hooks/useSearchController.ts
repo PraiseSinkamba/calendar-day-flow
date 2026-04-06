@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { Temporal } from 'temporal-polyfill';
 
 import { ICalendarApp } from '@/types';
@@ -14,7 +14,10 @@ export interface SearchController {
   setIsMobileSearchOpen: (open: boolean) => void;
   searchLoading: boolean;
   searchResults: CalendarSearchEvent[];
-  handleSearchResultClick: (event: CalendarSearchEvent) => void;
+  handleSearchResultClick: (
+    event: CalendarSearchEvent,
+    source?: 'desktop' | 'mobile'
+  ) => void;
   handleSearchClick: () => void;
   handleSearchClose: () => void;
   handleMobileSearchClose: () => void;
@@ -33,6 +36,8 @@ export function useSearchController(
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<CalendarSearchEvent[]>([]);
+  const prevSearchKeywordRef = useRef('');
+  const prevIsSearchOpenRef = useRef(false);
 
   // Sync highlighted event → selected event whenever the app highlights one
   // (e.g. after navigating to a search result).
@@ -44,9 +49,14 @@ export function useSearchController(
 
   // Clear highlight when search drawer closes.
   useEffect(() => {
-    if (!isSearchOpen && app.state.highlightedEventId !== null) {
+    if (
+      prevIsSearchOpenRef.current &&
+      !isSearchOpen &&
+      app.state.highlightedEventId !== null
+    ) {
       app.highlightEvent(null);
     }
+    prevIsSearchOpenRef.current = isSearchOpen;
   }, [isSearchOpen, app]);
 
   // Debounced search execution.
@@ -54,9 +64,13 @@ export function useSearchController(
     if (!searchKeyword.trim()) {
       setIsSearchOpen(false);
       setSearchResults([]);
-      if (app.state.highlightedEventId !== null) {
+      if (
+        prevSearchKeywordRef.current.trim() &&
+        app.state.highlightedEventId !== null
+      ) {
         app.highlightEvent(null);
       }
+      prevSearchKeywordRef.current = searchKeyword;
       return;
     }
 
@@ -117,32 +131,56 @@ export function useSearchController(
     };
 
     const timer = setTimeout(performSearch, debounceDelay);
+    prevSearchKeywordRef.current = searchKeyword;
     return () => clearTimeout(timer);
   }, [searchKeyword, searchConfig, app]);
 
   const handleSearchResultClick = useCallback(
-    (event: CalendarSearchEvent) => {
-      let date: Date;
-      if (event.start instanceof Date) {
-        date = event.start;
-      } else if (typeof event.start === 'string') {
-        date = new Date(event.start);
-      } else {
-        date = temporalToDate(
-          event.start as
-            | Temporal.PlainDate
-            | Temporal.PlainDateTime
-            | Temporal.ZonedDateTime
-        );
-      }
-      app.setCurrentDate(date);
-      app.highlightEvent(event.id);
+    (event: CalendarSearchEvent, source: 'desktop' | 'mobile' = 'desktop') => {
+      const defaultAction = () => {
+        let date: Date;
+        if (event.start instanceof Date) {
+          date = event.start;
+        } else if (typeof event.start === 'string') {
+          date = new Date(event.start);
+        } else {
+          date = temporalToDate(
+            event.start as
+              | Temporal.PlainDate
+              | Temporal.PlainDateTime
+              | Temporal.ZonedDateTime
+          );
+        }
+        app.setCurrentDate(date);
+        app.highlightEvent(event.id);
 
-      if (isMobileSearchOpen) {
-        setIsMobileSearchOpen(false);
+        if (isMobileSearchOpen) {
+          setIsMobileSearchOpen(false);
+        }
+      };
+
+      const closeSearch = () => {
+        if (source === 'mobile') {
+          setIsMobileSearchOpen(false);
+        } else {
+          setIsSearchOpen(false);
+        }
+        app.highlightEvent(null);
+      };
+
+      if (searchConfig?.onResultClick) {
+        searchConfig.onResultClick({
+          event,
+          app,
+          source,
+          defaultAction,
+          closeSearch,
+        });
+      } else {
+        defaultAction();
       }
     },
-    [app, isMobileSearchOpen]
+    [app, isMobileSearchOpen, searchConfig]
   );
 
   // Opens the mobile search dialog and resets the keyword.
