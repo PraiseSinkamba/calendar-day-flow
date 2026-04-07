@@ -14,7 +14,7 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 export const sidebarTabs = [
   {
     title: 'Calendar',
-    url: '/docs',
+    url: '/docs/introduction',
     icon: (
       <Image
         src={`${BASE}/logo.png`}
