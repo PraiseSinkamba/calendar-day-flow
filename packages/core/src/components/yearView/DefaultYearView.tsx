@@ -212,15 +212,21 @@ export const DefaultYearView = ({
         const container = scrollElementRef.current;
         if (!container) return;
 
-        const highlightedElement = container.querySelector(
+        const el = container.querySelector(
           `[data-event-id="${app.state.highlightedEventId}"]`
         ) as HTMLElement | null;
+        if (!el) return;
 
-        highlightedElement?.scrollIntoView({
-          block: 'center',
-          inline: 'nearest',
-          behavior: 'smooth',
-        });
+        const containerRect = container.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        const targetTop =
+          elRect.top -
+          containerRect.top +
+          container.scrollTop -
+          container.clientHeight / 2 +
+          elRect.height / 2;
+
+        container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
       });
     } else if (prevHighlightedEventId.current) {
       setSelectedEventId(null);

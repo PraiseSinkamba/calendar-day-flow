@@ -164,6 +164,49 @@ export const FixedWeekYearView = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Sync highlighted event from app state — scroll to it and select it
+  const prevHighlightedEventId = useRef(app.state.highlightedEventId);
+
+  useEffect(() => {
+    if (app.state.highlightedEventId) {
+      setSelectedEventId(app.state.highlightedEventId);
+
+      requestAnimationFrame(() => {
+        const container = contentRef.current;
+        if (!container) return;
+
+        const el = container.querySelector(
+          `[data-event-id="${app.state.highlightedEventId}"]`
+        ) as HTMLElement | null;
+        if (!el) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        const targetTop =
+          elRect.top -
+          containerRect.top +
+          container.scrollTop -
+          container.clientHeight / 2 +
+          elRect.height / 2;
+        const targetLeft =
+          elRect.left -
+          containerRect.left +
+          container.scrollLeft -
+          container.clientWidth / 2 +
+          elRect.width / 2;
+
+        container.scrollTo({
+          top: Math.max(0, targetTop),
+          left: Math.max(0, targetLeft),
+          behavior: 'smooth',
+        });
+      });
+    } else if (prevHighlightedEventId.current) {
+      setSelectedEventId(null);
+    }
+    prevHighlightedEventId.current = app.state.highlightedEventId;
+  }, [app.state.highlightedEventId]);
+
   // Calculate the maximum number of columns required for the current year
   const totalColumns = useMemo(
     () => getFixedWeekTotalColumns(currentYear, startOfWeek),
