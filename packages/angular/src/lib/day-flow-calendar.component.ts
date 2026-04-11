@@ -25,6 +25,8 @@ import type {
   ColorPickerProps,
   CreateCalendarDialogColorPickerProps,
   CalendarHeaderProps,
+  EventContextMenuSlotArgs,
+  GridContextMenuSlotArgs,
 } from '@dayflow/core';
 import {
   CalendarRenderer,
@@ -80,6 +82,8 @@ export class DayFlowCalendarComponent
   @Input()
   createCalendarDialogColorPicker?: TemplateRef<CreateCalendarDialogColorPickerProps>;
   @Input() calendarHeader?: TemplateRef<CalendarHeaderProps>;
+  @Input() eventContextMenu?: TemplateRef<EventContextMenuSlotArgs>;
+  @Input() gridContextMenu?: TemplateRef<GridContextMenuSlotArgs>;
   @Input() collapsedSafeAreaLeft?: number;
 
   @ViewChild('container') container!: ElementRef<HTMLElement>;
@@ -149,6 +153,8 @@ export class DayFlowCalendarComponent
         'colorPicker',
         'createCalendarDialogColorPicker',
         'calendarHeader',
+        'eventContextMenu',
+        'gridContextMenu',
       ];
       if (slotKeys.some(key => changes[key])) {
         const activeOverrides = this.getActiveOverrides();
@@ -200,6 +206,8 @@ export class DayFlowCalendarComponent
       colorPicker: this.colorPicker,
       createCalendarDialogColorPicker: this.createCalendarDialogColorPicker,
       calendarHeader: this.calendarHeader,
+      eventContextMenu: this.eventContextMenu,
+      gridContextMenu: this.gridContextMenu,
     };
     return Object.keys(templateInputs).filter(
       key => templateInputs[key] !== null && templateInputs[key] !== undefined
@@ -322,6 +330,12 @@ export class DayFlowCalendarComponent
       }
       case 'calendarHeader': {
         return this.calendarHeader ?? null;
+      }
+      case 'eventContextMenu': {
+        return this.eventContextMenu ?? null;
+      }
+      case 'gridContextMenu': {
+        return this.gridContextMenu ?? null;
       }
       default: {
         return null;

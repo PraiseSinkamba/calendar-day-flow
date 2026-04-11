@@ -143,7 +143,7 @@ const CalendarEvent = ({
   } = useEventInteraction({
     event,
     isTouchEnabled,
-    onMoveStart,
+    onMoveStart: isDraggable ? onMoveStart : undefined,
     onEventLongPress,
     onEventSelect,
     onDetailPanelToggle,
@@ -438,7 +438,7 @@ const CalendarEvent = ({
         onDblClick={handleDoubleClick}
         onMouseDown={e => {
           if (!isTouchEnabled) setIsPressed(true);
-          if (onMoveStart) {
+          if (onMoveStart && isDraggable) {
             const mouseEvent = e as MouseEvent;
             if (multiDaySegmentInfo) {
               onMoveStart(mouseEvent, {
