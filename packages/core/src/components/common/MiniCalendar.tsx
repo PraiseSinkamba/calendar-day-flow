@@ -7,10 +7,6 @@ import {
   miniCalendarDay,
   miniCalendarDayHeader,
   miniCalendarGrid,
-  miniCalendarCurrentMonth,
-  miniCalendarOtherMonth,
-  miniCalendarToday,
-  miniCalendarSelected,
 } from '@/styles/classNames';
 import type { Event } from '@/types/event';
 import { getLineColor, temporalToVisualDate } from '@/utils';
@@ -81,7 +77,6 @@ export const MiniCalendar = ({
         ? temporalToVisualDate(event.end, timeZone)
         : startFull;
 
-      // Normalize to day boundaries
       const startDate = new Date(startFull);
       startDate.setHours(0, 0, 0, 0);
 
@@ -90,7 +85,6 @@ export const MiniCalendar = ({
 
       let adjustedEnd = new Date(endDate);
 
-      // Match MonthView's logic for non all-day events ending at midnight
       if (!event.allDay) {
         const hasTimeComponent =
           endFull.getHours() !== 0 ||
@@ -112,7 +106,6 @@ export const MiniCalendar = ({
         calendarRegistry
       ).toLowerCase();
 
-      // Iterate through all days the event spans
       for (
         let current = new Date(startDate);
         current <= adjustedEnd;
@@ -120,7 +113,6 @@ export const MiniCalendar = ({
       ) {
         const key = current.toDateString();
         const existing = map.get(key) ?? [];
-        // Keep dots unique by color and cap density so the cell stays readable.
         if (!existing.includes(color) && existing.length < MAX_EVENT_DOTS) {
           map.set(key, [...existing, color]);
         }
@@ -133,7 +125,7 @@ export const MiniCalendar = ({
     const year = visibleMonth.getFullYear();
     const month = visibleMonth.getMonth();
     const firstDay = new Date(year, month, 1);
-    const startOffset = (firstDay.getDay() + 6) % 7; // Monday as first day
+    const startOffset = (firstDay.getDay() + 6) % 7;
     const totalCells = 42;
     const days: Array<{
       date: number;
@@ -159,38 +151,31 @@ export const MiniCalendar = ({
   }, [visibleMonth, currentDateKey, todayKey]);
 
   return (
-    <div className='px-3 py-3'>
+    <div className='df-mini-calendar-body'>
       {showHeader ? (
-        <div className='mb-3 flex items-center justify-between'>
+        <div className='df-mini-calendar-header-nav'>
           <button
             type='button'
-            className='flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+            className='df-mini-calendar-nav-btn'
             onClick={() => onMonthChange(-1)}
             aria-label='Previous month'
           >
-            <ChevronLeft className='h-4 w-4' />
+            <ChevronLeft />
           </button>
-          <span className='text-sm font-semibold text-gray-700 dark:text-gray-200'>
-            {monthLabel}
-          </span>
+          <span className='df-mini-calendar-month-label'>{monthLabel}</span>
           <button
             type='button'
-            className='flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+            className='df-mini-calendar-nav-btn'
             onClick={() => onMonthChange(1)}
             aria-label='Next month'
           >
-            <ChevronRight className='h-4 w-4' />
+            <ChevronRight />
           </button>
         </div>
-      ) : (
-        ''
-      )}
+      ) : null}
       <div className={miniCalendarGrid}>
         {weekdayLabels.map((label, index) => (
-          <div
-            key={`weekday-${index}`}
-            className={`${miniCalendarDayHeader} text-gray-500 dark:text-gray-400`}
-          >
+          <div key={`weekday-${index}`} className={miniCalendarDayHeader}>
             {label}
           </div>
         ))}
@@ -200,28 +185,23 @@ export const MiniCalendar = ({
             <button
               type='button'
               key={day.fullDate.getTime()}
-              className={` ${miniCalendarDay} ${
-                day.isToday
-                  ? miniCalendarToday
-                  : day.isSelected
-                    ? miniCalendarSelected
-                    : day.isCurrentMonth
-                      ? miniCalendarCurrentMonth
-                      : miniCalendarOtherMonth
-              } relative flex flex-col items-center justify-center pt-1 pb-1`}
+              className={`${miniCalendarDay} df-mini-calendar-day-cell`}
+              data-today={day.isToday ? 'true' : undefined}
+              data-selected={
+                !day.isToday && day.isSelected ? 'true' : undefined
+              }
+              data-other-month={day.isCurrentMonth ? undefined : 'true'}
               onClick={() => onDateSelect(day.fullDate)}
             >
-              <span className='z-10'>{day.date}</span>
+              <span className='df-mini-calendar-day-number'>{day.date}</span>
               {showEventDots && dots.length > 0 && (
-                <div className='absolute bottom-0.5 flex gap-px'>
+                <div className='df-mini-calendar-dots'>
                   {dots.slice(0, MAX_EVENT_DOTS).map((color, index) => (
                     <div
                       key={`${color}-${index}`}
                       data-mini-calendar-dot='true'
-                      className='h-1 w-1 rounded-full'
-                      style={{
-                        backgroundColor: color,
-                      }}
+                      className='df-mini-calendar-dot'
+                      style={{ backgroundColor: color }}
                     />
                   ))}
                 </div>

@@ -21,7 +21,6 @@ interface DefaultEventDetailDialogProps extends EventDetailDialogProps {
 
 /**
  * Default event detail dialog component (Dialog mode)
- * Content is consistent with DefaultEventDetailPanel, but displayed using Dialog/Modal
  */
 const DefaultEventDetailDialog = ({
   event,
@@ -37,10 +36,8 @@ const DefaultEventDetailDialog = ({
   const previousEventIdRef = useRef(event.id);
   const { t } = useLocale();
 
-  // Sync state when event prop changes (e.g. if opened with a different event)
   useEffect(() => {
     setEditedEvent(event);
-
     if (previousEventIdRef.current !== event.id) {
       setIsSaving(false);
       setIsDeleting(false);
@@ -48,7 +45,6 @@ const DefaultEventDetailDialog = ({
     }
   }, [event]);
 
-  // Get visible calendar type options
   const colorOptions: CalendarOption[] = useMemo(() => {
     const registry = app
       ? app.getCalendarRegistry()
@@ -121,12 +117,7 @@ const DefaultEventDetailDialog = ({
       minute: 0,
       timeZone: tz,
     });
-    setEditedEvent({
-      ...editedEvent,
-      allDay: false,
-      start,
-      end,
-    });
+    setEditedEvent({ ...editedEvent, allDay: false, start, end });
   };
 
   const eventTimeZone = useMemo(
@@ -153,14 +144,12 @@ const DefaultEventDetailDialog = ({
   const isViewable = readOnlyConfig?.viewable !== false;
   const isPending = isSaving || isDeleting;
 
-  // Check if it's a subscribed calendar
   const isSubscribed = useMemo(() => {
     if (!event.calendarId) return false;
     const calendar = app?.getCalendarRegistry().get(event.calendarId);
     return !!calendar?.subscription;
   }, [app, event.calendarId]);
 
-  // If subscribed calendar and no notes, hide notes field
   const shouldShowNotes =
     !isSubscribed || (editedEvent.description || '').trim() !== '';
 
@@ -170,49 +159,37 @@ const DefaultEventDetailDialog = ({
     return null;
   }
 
-  // Handle backdrop click, but ignore clicks from popup components (e.g., RangePicker)
   const handleBackdropClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
-
-    // Check if clicked on RangePicker or ColorPicker popup content
-    if (target.closest('[data-range-picker-popup]')) {
-      return;
-    }
-
-    // Only close when actually clicking the backdrop
-    if (target === e.currentTarget) {
-      onClose();
-    }
+    if (target.closest('[data-range-picker-popup]')) return;
+    if (target === e.currentTarget) onClose();
   };
 
   const dialogContent = (
     <div
-      className='df-portal fixed inset-0 flex items-center justify-center'
-      style={{ pointerEvents: 'auto', zIndex: 9998 }}
+      className='df-portal df-event-dialog-overlay'
+      style={{
+        zIndex: 9998,
+      }}
       data-event-detail-dialog='true'
     >
       {/* Backdrop */}
       <div
-        className='absolute inset-0 bg-black/60 dark:bg-black/80'
+        className='df-event-dialog-backdrop'
+        style={{ position: 'absolute', inset: 0 }}
         onClick={handleBackdropClick}
       />
 
-      {/* Dialog - relative positioning ensures it appears above backdrop */}
+      {/* Dialog */}
       <div className={dialogContainer}>
-        {/* Close button */}
         <button
           type='button'
           onClick={onClose}
           disabled={isPending}
-          className='absolute top-4 right-4 text-gray-400 transition hover:text-gray-600 disabled:opacity-50 dark:text-gray-500 dark:hover:text-gray-200'
+          className='df-event-dialog-close'
           aria-label='Close'
         >
-          <svg
-            className='h-5 w-5'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
+          <svg fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path
               strokeLinecap='round'
               strokeLinejoin='round'
@@ -222,13 +199,10 @@ const DefaultEventDetailDialog = ({
           </svg>
         </button>
 
-        {/* Content */}
         <div>
-          <span className='mb-1 block text-xs text-gray-600 dark:text-gray-300'>
-            {t('eventTitle')}
-          </span>
-          <div className='mb-4 flex items-center justify-between gap-3'>
-            <div className='flex-1'>
+          <span className='df-form-label'>{t('eventTitle')}</span>
+          <div className='df-form-row'>
+            <div className='df-form-field'>
               <input
                 id={`event-dialog-title-${editedEvent.id}`}
                 name='title'
@@ -242,7 +216,7 @@ const DefaultEventDetailDialog = ({
                     title: (e.target as HTMLInputElement).value,
                   });
                 }}
-                className='df-focus-ring w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+                className='df-form-input'
               />
             </div>
             {isEditable && (
@@ -250,22 +224,17 @@ const DefaultEventDetailDialog = ({
                 options={colorOptions}
                 value={editedEvent.calendarId || 'blue'}
                 disabled={isPending}
-                onChange={value => {
-                  setEditedEvent({
-                    ...editedEvent,
-                    calendarId: value,
-                  });
-                }}
+                onChange={value =>
+                  setEditedEvent({ ...editedEvent, calendarId: value })
+                }
                 registry={app?.getCalendarRegistry()}
               />
             )}
           </div>
 
           {editedEvent.allDay ? (
-            <div className='mb-4'>
-              <div className='mb-1 text-xs text-gray-600 dark:text-gray-300'>
-                {t('dateRange')}
-              </div>
+            <div className='df-event-dialog-time-row'>
+              <div className='df-form-label'>{t('dateRange')}</div>
               <RangePicker
                 value={[editedEvent.start, editedEvent.end]}
                 format='YYYY-MM-DD'
@@ -279,10 +248,8 @@ const DefaultEventDetailDialog = ({
               />
             </div>
           ) : (
-            <div className='mb-4'>
-              <div className='mb-1 text-xs text-gray-600 dark:text-gray-300'>
-                {t('timeRange')}
-              </div>
+            <div className='df-event-dialog-time-row'>
+              <div className='df-form-label'>{t('timeRange')}</div>
               <RangePicker
                 value={[editedEvent.start, editedEvent.end]}
                 timeZone={eventTimeZone}
@@ -291,21 +258,13 @@ const DefaultEventDetailDialog = ({
                   nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]
                 ) => {
                   const [start, end] = nextRange;
-                  setEditedEvent({
-                    ...editedEvent,
-                    start,
-                    end,
-                  });
+                  setEditedEvent({ ...editedEvent, start, end });
                 }}
                 onOk={(
                   nextRange: [Temporal.ZonedDateTime, Temporal.ZonedDateTime]
                 ) => {
                   const [start, end] = nextRange;
-                  setEditedEvent({
-                    ...editedEvent,
-                    start,
-                    end,
-                  });
+                  setEditedEvent({ ...editedEvent, start, end });
                 }}
                 locale={app?.state.locale}
               />
@@ -313,10 +272,8 @@ const DefaultEventDetailDialog = ({
           )}
 
           {shouldShowNotes && (
-            <div className='mb-4'>
-              <span className='mb-1 block text-xs text-gray-600 dark:text-gray-300'>
-                {t('note')}
-              </span>
+            <div className='df-event-dialog-notes-row'>
+              <span className='df-form-label'>{t('note')}</span>
               <textarea
                 id={`event-dialog-note-${editedEvent.id}`}
                 name='note'
@@ -330,19 +287,19 @@ const DefaultEventDetailDialog = ({
                   })
                 }
                 rows={4}
-                className='df-focus-ring w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-gray-900 shadow-sm transition focus:ring-2 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100'
+                className='df-form-textarea'
                 placeholder={t('addNotePlaceholder')}
               />
             </div>
           )}
 
           {isEditable && (
-            <div className='flex space-x-2'>
+            <div className='df-form-actions'>
               {editedEvent.allDay ? (
                 <button
                   type='button'
                   disabled={isPending}
-                  className='df-tint-primary df-hover-primary-md rounded-lg px-3 py-2 text-xs font-medium transition disabled:opacity-50'
+                  className='df-tint-primary df-hover-primary-md df-btn-sm'
                   onClick={convertToRegular}
                 >
                   {t('setAsTimed')}
@@ -351,7 +308,7 @@ const DefaultEventDetailDialog = ({
                 <button
                   type='button'
                   disabled={isPending}
-                  className='df-tint-primary df-hover-primary-md rounded-lg px-3 py-2 text-xs font-medium transition disabled:opacity-50'
+                  className='df-tint-primary df-hover-primary-md df-btn-sm'
                   onClick={convertToAllDay}
                 >
                   {t('setAsAllDay')}
@@ -361,7 +318,7 @@ const DefaultEventDetailDialog = ({
               <LoadingButton
                 type='button'
                 disabled={isPending}
-                className='df-fill-destructive df-hover-destructive rounded-lg border border-border px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50'
+                className='df-fill-destructive df-hover-destructive df-btn-sm'
                 onClick={handleDelete}
                 loading={isDeleting}
               >
@@ -370,11 +327,10 @@ const DefaultEventDetailDialog = ({
 
               <LoadingButton
                 type='button'
-                className={`df-fill-primary ml-auto rounded-lg px-3 py-2 text-xs font-medium transition ${
-                  hasChanges
-                    ? 'df-shadow-primary df-hover-primary-solid shadow-lg'
-                    : 'cursor-not-allowed opacity-50 grayscale-[0.5]'
+                className={`df-fill-primary df-btn-sm ${
+                  hasChanges ? 'df-shadow-primary df-hover-primary-solid' : ''
                 }`}
+                style={{ marginLeft: 'auto' }}
                 onClick={handleSave}
                 disabled={!hasChanges || isPending}
                 loading={isSaving}

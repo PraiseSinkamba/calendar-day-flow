@@ -124,9 +124,15 @@ export const CalendarRoot = ({
   // UI layer (detail panel or mobile drawer) and chains the previous handler.
   useEffect(() => {
     const callbacks = (
-      app as unknown as { callbacks: { onDismissUI?: () => void } }
+      app as unknown as {
+        callbacks: {
+          onDismissUI?: () => void;
+          onEventDetailToggle?: (id: string | null) => void;
+        };
+      }
     ).callbacks;
     const prevDismiss = callbacks.onDismissUI;
+    const prevDetailToggle = callbacks.onEventDetailToggle;
 
     callbacks.onDismissUI = () => {
       if (eventDialog.detailPanelEventId) {
@@ -138,8 +144,14 @@ export const CalendarRoot = ({
       prevDismiss?.();
     };
 
+    callbacks.onEventDetailToggle = (id: string | null) => {
+      eventDialog.setDetailPanelEventId(id);
+      prevDetailToggle?.(id);
+    };
+
     return () => {
       callbacks.onDismissUI = prevDismiss;
+      callbacks.onEventDetailToggle = prevDetailToggle;
     };
   }, [app, eventDialog, quickCreate]);
 
@@ -201,7 +213,8 @@ export const CalendarRoot = ({
     [sidebar.isCollapsed, sidebar.toggleCollapsed]
   );
 
-  const hasSafeAreaLeftValue = collapsedSafeAreaLeft !== undefined;
+  const hasSafeAreaLeftValue =
+    collapsedSafeAreaLeft !== undefined && collapsedSafeAreaLeft !== null;
   const miniSidebarWidth = hasSafeAreaLeftValue ? '0px' : sidebar.miniWidth;
 
   const safeAreaLeft =
@@ -275,7 +288,7 @@ export const CalendarRoot = ({
         locale={app.state.locale}
         messages={customMessages}
       >
-        <div className='df-calendar-container relative flex flex-row overflow-hidden select-none'>
+        <div className='df-calendar-container'>
           <ContentSlot
             store={customRenderingStore}
             generatorName='titleBarSlot'
@@ -290,7 +303,7 @@ export const CalendarRoot = ({
 
           {sidebar.enabled && (
             <aside
-              className='absolute top-0 bottom-0 left-0 z-0 h-full'
+              className='df-calendar-sidebar-aside'
               style={{ width: sidebar.width }}
             >
               {sidebar.content}
@@ -298,20 +311,21 @@ export const CalendarRoot = ({
           )}
 
           <div
-            className={`relative z-10 flex h-full flex-1 flex-col overflow-hidden border-l bg-white transition-all duration-200 ease-in-out dark:bg-gray-900 ${sidebar.isCollapsed ? 'border-gray-200 shadow-xl dark:border-gray-700' : 'border-transparent'}`}
+            className='df-calendar-shell'
+            data-sidebar-collapsed={sidebar.isCollapsed}
             style={{
               marginLeft: sidebar.enabled
-                ? sidebar.isCollapsed
-                  ? miniSidebarWidth
-                  : sidebar.width
+                ? `calc(${
+                    sidebar.isCollapsed ? miniSidebarWidth : sidebar.width
+                  } - 1px)`
                 : 0,
             }}
           >
             {renderHeader()}
 
-            <div className='relative flex-1 overflow-hidden' ref={calendarRef}>
-              <div className='calendar-renderer relative flex h-full flex-row'>
-                <div className='h-full flex-1 overflow-hidden'>
+            <div className='df-calendar-content-wrap' ref={calendarRef}>
+              <div className='df-calendar-renderer'>
+                <div className='df-calendar-view-container'>
                   <ViewComponent {...viewProps} />
                 </div>
 

@@ -1,0 +1,14 @@
+/**
+ * core-components.css
+ *
+ * Semantic CSS classes for DayFlow core components.
+ * This file acts as the single import manifest for grouped core styles.
+ */
+
+@import './core/common/header-controls.css';
+@import './core/common/forms-dialogs.css';
+@import './core/events/calendar-event.css';
+@import './core/overlays/mobile-event-drawer.css';
+@import './core/search/search.css';
+@import './core/overlays/quick-create.css';
+@import './core/views/layout.css';

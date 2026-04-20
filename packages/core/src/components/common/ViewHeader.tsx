@@ -1,10 +1,7 @@
+import type { ComponentChild } from 'preact';
+
 import { useLocale } from '@/locale';
-import {
-  headerContainer,
-  headerTitle,
-  headerSubtitle,
-  textGray900,
-} from '@/styles/classNames';
+import { headerTitle, headerSubtitle } from '@/styles/classNames';
 import { ICalendarApp } from '@/types';
 
 import TodayBox from './TodayBox';
@@ -28,6 +25,8 @@ interface ViewHeaderProps {
   customTitle?: string;
   /** Custom subtitle (optional, only for Day view) */
   customSubtitle?: string;
+  /** Extra content rendered beside the subtitle row */
+  subtitleMeta?: ComponentChild;
   /** Whether to show TodayBox (default determined by viewType: day=false, week/month=true) */
   showTodayBox?: boolean;
   /** Sticky year for Year view (optional, only for Year view) */
@@ -48,6 +47,7 @@ const ViewHeader = ({
   onToday,
   customTitle,
   customSubtitle,
+  subtitleMeta,
   showTodayBox,
   stickyYear,
   stickyYearOffset = 0,
@@ -55,11 +55,8 @@ const ViewHeader = ({
   nextYearOffset = 0,
 }: ViewHeaderProps) => {
   const { locale } = useLocale();
-  // Determine whether to show TodayBox based on view type
-  // Default: show for all views if callbacks are provided, unless explicitly set to false
   const shouldShowTodayBox = showTodayBox === undefined ? true : showTodayBox;
 
-  // Generate default title
   const getDefaultTitle = (): string => {
     switch (viewType) {
       case 'day':
@@ -81,7 +78,6 @@ const ViewHeader = ({
     }
   };
 
-  // Generate default subtitle (only for Day view)
   const getDefaultSubtitle = (): string | null => {
     if (viewType === 'day') {
       return currentDate.toLocaleDateString(locale, {
@@ -97,43 +93,25 @@ const ViewHeader = ({
 
   return (
     <div
-      className={headerContainer}
-      style={{ position: 'relative' }}
+      className='df-view-header-container'
       onContextMenu={e => e.preventDefault()}
     >
-      <div className='flex-1'>
-        {/* For Year view: show sticky year if available, otherwise show title */}
+      <div className='df-view-header-title-area'>
         {viewType === 'year' && stickyYear ? (
-          <div
-            style={{
-              position: 'relative',
-              overflow: 'hidden',
-              height: '1.5em',
-            }}
-          >
-            {/* Current sticky year - being pushed up */}
+          <div className='df-view-header-year-stack'>
             <h1
-              className={headerTitle}
+              className={`${headerTitle} df-view-header-year-title`}
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
                 transform: `translateY(-${stickyYearOffset}px)`,
-                willChange: 'transform',
               }}
             >
               {stickyYear}
             </h1>
-            {/* Next year - coming from below */}
             {nextYear && (
               <h1
-                className={headerTitle}
+                className={`${headerTitle} df-view-header-year-title`}
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
                   transform: `translateY(${nextYearOffset}px)`,
-                  willChange: 'transform',
                 }}
               >
                 {nextYear}
@@ -142,15 +120,24 @@ const ViewHeader = ({
           </div>
         ) : (
           <div>
-            <div className={`${headerTitle} ${textGray900}`}>{title}</div>
+            <div className={headerTitle}>{title}</div>
+
             {subtitle && <div className={headerSubtitle}>{subtitle}</div>}
+            {subtitleMeta && (
+              <div className='df-view-header-subtitle-row'>
+                {subtitleMeta && (
+                  <div className='df-view-header-subtitle-meta'>
+                    {subtitleMeta}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Right side: TodayBox */}
       {shouldShowTodayBox && onPrevious && onNext && onToday && (
-        <div className='flex items-center gap-2'>
+        <div className='df-view-header-nav'>
           <TodayBox
             handlePreviousMonth={onPrevious}
             handleNextMonth={onNext}

@@ -2,10 +2,27 @@
 
 DayFlow は、カレンダーコンポーネントの外観をカスタマイズできる `df-` プレフィックス付きの CSS クラスセットを提供しています。これらのクラスは、コアライブラリを変更せずに簡単にスタイルをカスタマイズできるように設計されています。
 
+## 適切な CSS エントリの選び方
+
+Tailwind CSS をすでに使っているかどうかで、読み込むスタイルシートを選んでください。
+
+| エントリ                | 含まれる内容                                  | 使う場面                         |
+| ----------------------- | --------------------------------------------- | -------------------------------- |
+| `styles.css`            | Tailwind preflight / reset を含む完全バンドル | Tailwind を使っていない場合      |
+| `styles.components.css` | コンポーネントスタイルのみ、CSS reset なし    | すでに Tailwind を使っている場合 |
+
+```css
+@import '@dayflow/core/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+テーマ上書きでは、`--df-color-*` 変数または以下に記載した安定した `df-*` セマンティッククラスを優先してください。
+
 ## 目次
 
 - [共通クラス](#共通)
 - [セマンティック補助クラス](#セマンティック補助クラス)
+- [レイアウトとモーションの補助クラス](#レイアウトとモーションの補助クラス)
 - [日ビュークラス](#日ビュー)
 - [週ビュークラス](#週ビュー)
 - [月ビュークラス](#月ビュー)
@@ -15,6 +32,7 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 - [ナビゲーションクラス](#ナビゲーション)
 - [イベント詳細クラス](#イベント詳細)
 - [コンテンツスロットクラス](#content-slots)
+- [イベント状態属性](#イベント状態属性)
 
 ---
 
@@ -22,30 +40,34 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 
 すべてのカレンダービューで使用される共通 CSS クラス。
 
-| クラス名                   | 説明                                                                                                                                          |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `df-calendar-container`    | サイドバーとカレンダーの両方をラップする最外層のルートコンテナ。`--df-calendar-height` CSS 変数を使用してコンポーネントの高さを設定できます。 |
-| `df-calendar`              | カレンダーメインコンテナ（ヘッダーとビューコンテンツを含む）                                                                                  |
-| `df-header`                | カレンダーヘッダーセクション（タイトル、今日ボタン、表示切り替えを含む）                                                                      |
-| `df-header-left`           | ヘッダーの左側セクション（タイトルとナビゲーションボタン）                                                                                    |
-| `df-header-mid`            | ヘッダーの中央セクション（現在の表示期間タイトル）                                                                                            |
-| `df-header-right`          | ヘッダーの右側セクション（表示切り替えと検索）                                                                                                |
-| `df-navigation`            | ナビゲーションコントロールコンテナ                                                                                                            |
-| `df-event`                 | すべてのイベントの基本クラス                                                                                                                  |
-| `df-event-title`           | イベントタイトルテキスト                                                                                                                      |
-| `df-event-time`            | イベント時間テキスト                                                                                                                          |
-| `df-event-color-bar`       | イベント左側のカラーバー（日/週ビュー）                                                                                                       |
-| `df-month-event-color-bar` | 通常イベントのカラーインジケーター（月ビュー）                                                                                                |
-| `df-all-day-row`           | 終日イベント行コンテナ                                                                                                                        |
-| `df-all-day-label`         | 終日ラベルテキスト                                                                                                                            |
-| `df-all-day-content`       | 終日イベントコンテンツエリア                                                                                                                  |
-| `df-all-day-cell`          | 個別の終日イベントセル                                                                                                                        |
-| `df-date-number`           | 日付番号の表示                                                                                                                                |
-| `df-current-time-line`     | 現在時刻インジケーターラインコンテナ                                                                                                          |
-| `df-current-time-label`    | 現在時刻ラベルテキスト                                                                                                                        |
-| `df-current-time-bar`      | 現在時刻の水平線                                                                                                                              |
-| `df-portal`                | Portal で描画されるフローティング UI のルートスコープクラス                                                                                   |
-| `df-range-picker`          | Range Picker のトリガーとポップアップに付くルートスコープクラス                                                                               |
+| クラス名                   | 説明                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| `df-calendar-container`    | サイドバーとカレンダーを包む最外層のルートコンテナ。`--df-calendar-height` に対応します。 |
+| `df-calendar`              | カレンダーメインコンテナ（ヘッダーとビューコンテンツを含む）                              |
+| `df-header`                | カレンダーヘッダーセクション（タイトル、今日ボタン、表示切り替えを含む）                  |
+| `df-header-left`           | ヘッダーの左側セクション（タイトルとナビゲーションボタン）                                |
+| `df-header-mid`            | ヘッダーの中央セクション（現在の表示期間タイトル）                                        |
+| `df-header-right`          | ヘッダーの右側セクション（表示切り替えと検索）                                            |
+| `df-navigation`            | ナビゲーションコントロールコンテナ                                                        |
+| `df-view-header-container` | セカンダリなビューヘッダー領域で使われる共有コンテナ                                      |
+| `df-view-header-title`     | ビュー単位のタイトルに使う共有テキストクラス                                              |
+| `df-view-header-subtitle`  | ビュー単位のサブタイトルに使う共有テキストクラス                                          |
+| `df-event`                 | すべてのイベントの基本クラス                                                              |
+| `df-event-title`           | イベントタイトルテキスト                                                                  |
+| `df-event-time`            | イベント時間テキスト                                                                      |
+| `df-event-color-bar`       | イベント左側のカラーバー（日/週ビュー）                                                   |
+| `df-month-event-color-bar` | 通常イベントのカラーインジケーター（月ビュー）                                            |
+| `df-all-day-row`           | 終日イベント行コンテナ                                                                    |
+| `df-all-day-label`         | 終日ラベルテキスト                                                                        |
+| `df-all-day-content`       | 終日イベントコンテンツエリア                                                              |
+| `df-all-day-cell`          | 個別の終日イベントセル                                                                    |
+| `df-date-number`           | 日付番号の表示                                                                            |
+| `df-current-time-line`     | 現在時刻インジケーターラインコンテナ                                                      |
+| `df-current-time-label`    | 現在時刻ラベルテキスト                                                                    |
+| `df-current-time-bar`      | 現在時刻の水平線                                                                          |
+| `df-calendar-checkbox`     | カレンダー一覧や関連コントロールで再利用される共有チェックボックススタイル                |
+| `df-portal`                | Portal で描画されるフローティング UI のルートスコープクラス                               |
+| `df-range-picker`          | Range Picker のトリガーとポップアップに付くルートスコープクラス                           |
 
 ---
 
@@ -53,26 +75,62 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 
 今回のスタイル再構成により、DayFlow はボタン状態や選択状態、破壊的アクション、フォーカスリングなどを表す安定した `df-*` セマンティッククラスを公開しています。これらは共有基盤 CSS で定義されており、カスタム slot やプラグイン UI から安全に再利用できます。
 
-| クラス名                 | 用途                                          |
-| ------------------------ | --------------------------------------------- |
-| `df-fill-primary`        | プライマリ塗りつぶし背景 + 自動前景文字色     |
-| `df-fill-secondary`      | セカンダリ塗りつぶし背景 + 自動前景文字色     |
-| `df-fill-destructive`    | 破壊的アクション背景 + 自動前景文字色         |
-| `df-tint-primary`        | プライマリ 10% ティント                       |
-| `df-tint-primary-md`     | プライマリ 20% ティント                       |
-| `df-tint-primary-lg`     | プライマリ 30% ティント                       |
-| `df-hover-primary`       | プライマリ系ホバー状態                        |
-| `df-hover-primary-solid` | プライマリ塗りつぶしボタンのホバー状態        |
-| `df-hover-destructive`   | 破壊的アクションのホバー状態                  |
-| `df-text-primary`        | プライマリ文字色                              |
-| `df-text-primary-fg`     | プライマリ背景上の文字色                      |
-| `df-text-destructive`    | 破壊的アクション文字色                        |
-| `df-border-primary`      | プライマリ枠線色                              |
-| `df-ring-primary`        | プライマリ ring トークン                      |
-| `df-shadow-primary`      | プライマリ shadow トークン                    |
-| `df-focus-ring`          | `:focus` 時にプライマリ border と ring を適用 |
+| クラス名                  | 用途                                          |
+| ------------------------- | --------------------------------------------- |
+| `df-fill-primary`         | プライマリ塗りつぶし背景 + 自動前景文字色     |
+| `df-fill-secondary`       | セカンダリ塗りつぶし背景 + 自動前景文字色     |
+| `df-fill-destructive`     | 破壊的アクション背景 + 自動前景文字色         |
+| `df-tint-primary`         | プライマリ 10% ティント                       |
+| `df-tint-primary-md`      | プライマリ 20% ティント                       |
+| `df-tint-primary-lg`      | プライマリ 30% ティント                       |
+| `df-hover-primary`        | プライマリ系ホバー状態                        |
+| `df-hover-primary-md`     | より強めのプライマリ系ホバー状態              |
+| `df-hover-primary-solid`  | プライマリ塗りつぶしボタンのホバー状態        |
+| `df-hover-base`           | DayFlow の hover トークンを使う標準ホバー背景 |
+| `df-hover-muted`          | muted 系ホバー背景                            |
+| `df-hover-destructive`    | 破壊的アクションのホバー状態                  |
+| `df-text-primary`         | プライマリ文字色                              |
+| `df-text-muted`           | 弱めのテキスト色                              |
+| `df-text-primary-fg`      | プライマリ背景上の文字色                      |
+| `df-text-secondary-fg`    | セカンダリ背景上の文字色                      |
+| `df-text-destructive`     | 破壊的アクション文字色                        |
+| `df-text-destructive-fg`  | 破壊的背景上の文字色                          |
+| `df-bg-base`              | ベースサーフェス背景                          |
+| `df-bg-card`              | カード背景                                    |
+| `df-bg-sidebar`           | サイドバー向けの muted 背景                   |
+| `df-bg-secondary`         | セカンダリ muted 背景                         |
+| `df-bg-tertiary`          | 第3レベル背景 / 区切り面                      |
+| `df-border-base`          | ベース境界線                                  |
+| `df-border-light`         | より軽い境界線                                |
+| `df-border-strong`        | プライマリ token を使う強い境界線             |
+| `df-border-primary`       | プライマリ境界線色                            |
+| `df-border-primary-soft`  | 柔らかいプライマリ境界線色                    |
+| `df-ring-primary`         | プライマリ ring トークン                      |
+| `df-ring-primary-solid`   | ソリッドなプライマリ ring トークン            |
+| `df-shadow-sm`            | 小さめの影                                    |
+| `df-shadow-md`            | 中程度の影                                    |
+| `df-shadow-primary`       | プライマリ shadow トークン                    |
+| `df-focus-ring`           | `:focus` 時にプライマリ border と ring を適用 |
+| `df-focus-ring-only`      | `:focus` 時に ring のみ適用                   |
+| `df-focus-border-primary` | `:focus` 時に border のみプライマリ化         |
 
 テーマ調整では、これらの `df-*` クラスまたは `--df-color-*` 変数を優先してください。`bg-primary`、`text-primary`、`hover:bg-primary/90` のような旧来の内部 Tailwind セマンティック名に依存しないでください。
+
+---
+
+## レイアウトとモーションの補助クラス
+
+これらのクラスは、カスタム slot コンテンツやプラグイン UI で DayFlow のレイアウトや入場アニメーションを再利用したいときに便利です。
+
+| クラス名                  | 用途                                                 |
+| ------------------------- | ---------------------------------------------------- |
+| `df-content-slot-stacked` | コンテンツスロットを縦積みし、利用可能な高さを埋める |
+| `df-scrollbar-hide`       | スクロール動作を維持したままスクロールバーを隠す     |
+| `df-animate-in`           | 入場アニメーションの基本タイミングヘルパー           |
+| `df-fade-in`              | フェードイン補助クラス                               |
+| `df-zoom-in-95`           | わずかなズームイン補助クラス                         |
+| `df-animate-slide-up`     | 上方向スライドの入場アニメーション                   |
+| `df-animate-slide-down`   | 下方向スライドの退場アニメーション                   |
 
 ---
 
@@ -133,15 +191,15 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 
 年ビュー専用の CSS クラス。これらは年間概要でのイベント外観のカスタマイズに特に便利です。
 
-| クラス名                      | 説明                                                                      |
-| ----------------------------- | ------------------------------------------------------------------------- |
-| `df-year-event`               | イベント外側コンテナ - イベント要素全体をラップ                           |
-| `df-year-event-content`       | イベントコンテンツコンテナ - アイコン、タイトル、その他のコンテンツを含む |
-| `df-year-event-title`         | イベントタイトルテキスト - タイトルの配置、フォントなどをカスタマイズ     |
-| `df-year-event-icon`          | イベントアイコンコンテナ - 終日イベントのアイコン用                       |
-| `df-year-event-indicator`     | 時間指定イベントの色インジケーター - 時間指定イベントの色付きドット/バー  |
-| `df-year-view-weekend-header` | 固定週レイアウトの週末曜日ヘッダー（土曜日/日曜日）                       |
-| `df-year-view-weekend-cell`   | 固定週レイアウトの週末グリッドセル（空または日付）                        |
+| クラス名                  | 説明                                                                |
+| ------------------------- | ------------------------------------------------------------------- |
+| `df-year-event`           | イベント外側コンテナ - イベント要素全体をラップ                     |
+| `df-event-year-content`   | 年ビューイベントのコンテンツコンテナ - アイコン、タイトルなどを含む |
+| `df-event-year-title`     | 年ビューイベントのタイトルテキスト - 配置やフォントの調整に使用     |
+| `df-event-icon-svg`       | イベント描画で共通利用される SVG アイコンクラス。年ビューでも使用   |
+| `df-event-year-indicator` | 年ビューの時間指定イベント用カラーインジケーター                    |
+| `df-year-grid-month`      | Grid Year View の月カードコンテナ                                   |
+| `df-year-fixed-day-cell`  | Fixed Week Year View の日セル                                       |
 
 ---
 
@@ -149,12 +207,20 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 
 ミニカレンダーコンポーネント（通常サイドバー或者日ビューに配置）用の CSS クラス。
 
-| クラス名                  | 説明                                   |
-| ------------------------- | -------------------------------------- |
-| `df-mini-calendar`        | ミニカレンダーコンテナ                 |
-| `df-mini-calendar-grid`   | 日付グリッドコンテナ                   |
-| `df-mini-calendar-header` | 曜日ヘッダーセル（例：「月」、「火」） |
-| `df-mini-calendar-day`    | 個別の日付セル                         |
+| クラス名                       | 説明                                   |
+| ------------------------------ | -------------------------------------- |
+| `df-mini-calendar`             | ミニカレンダーコンテナ                 |
+| `df-mini-calendar-body`        | ミニカレンダー本体ラッパー             |
+| `df-mini-calendar-header-nav`  | 月ナビゲーション行                     |
+| `df-mini-calendar-nav-btn`     | 前月 / 次月ボタン                      |
+| `df-mini-calendar-month-label` | 現在月ラベル                           |
+| `df-mini-calendar-grid`        | 日付グリッドコンテナ                   |
+| `df-mini-calendar-header`      | 曜日ヘッダーセル（例：「月」、「火」） |
+| `df-mini-calendar-day`         | ミニカレンダー日付ボタンのベースクラス |
+| `df-mini-calendar-day-cell`    | 日付セルの見た目を担うサーフェス       |
+| `df-mini-calendar-day-number`  | 日付数字ラベル                         |
+| `df-mini-calendar-dots`        | 日セル内のイベントドットコンテナ       |
+| `df-mini-calendar-dot`         | 個別のイベントドット                   |
 
 ---
 
@@ -162,14 +228,19 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 
 サイドバーコンポーネント用の CSS クラス。
 
-| クラス名                   | 説明                                         |
-| -------------------------- | -------------------------------------------- |
-| `df-sidebar`               | サイドバーコンテナ                           |
-| `df-sidebar-header`        | サイドバーヘッダーコンテナ                   |
-| `df-sidebar-header-toggle` | サイドバー折りたたみ/展開切り替えボタン      |
-| `df-sidebar-header-title`  | サイドバーヘッダータイトル（「カレンダー」） |
-| `df-calendar-list`         | カレンダーリストコンテナ                     |
-| `df-calendar-list-item`    | リスト内の個別カレンダー項目                 |
+| クラス名                  | 説明                                         |
+| ------------------------- | -------------------------------------------- |
+| `df-sidebar`              | サイドバーコンテナ                           |
+| `df-sidebar-header`       | サイドバーヘッダーコンテナ                   |
+| `df-sidebar-toggle`       | サイドバー折りたたみ/展開切り替えボタン      |
+| `df-sidebar-header-title` | サイドバーヘッダータイトル（「カレンダー」） |
+| `df-sidebar-list-shell`   | サイドバーリストのスクロールラッパー         |
+| `df-sidebar-list`         | カレンダーリストコンテナ                     |
+| `df-sidebar-list-item`    | リスト内の個別カレンダー項目                 |
+| `df-sidebar-row`          | 各項目内のインタラクティブな行               |
+| `df-sidebar-chip`         | 小型ラベル / chip                            |
+| `df-sidebar-dialog`       | サイドバー用ダイアログコンテナ               |
+| `df-sidebar-button`       | サイドバー共通ボタン                         |
 
 ---
 
@@ -177,10 +248,12 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 
 ナビゲーションボタン用の CSS クラス。
 
-| クラス名          | 説明                                     |
-| ----------------- | ---------------------------------------- |
-| `df-nav-button`   | ナビゲーション矢arrowボタン（前へ/次へ） |
-| `df-today-button` | 「今日」ボタン                           |
+| クラス名                   | 説明                                                |
+| -------------------------- | --------------------------------------------------- |
+| `df-nav-button`            | ナビゲーション矢印ボタンのベースクラス（前へ/次へ） |
+| `df-calendar-nav-button`   | カレンダーナビゲーション矢印ボタンのスタイルクラス  |
+| `df-today-button`          | 「今日」ボタンのベースクラス                        |
+| `df-calendar-today-button` | カレンダー用「今日」ボタンのスタイルクラス          |
 
 ---
 
@@ -188,12 +261,14 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 
 イベント詳細パネルとダイアログ用の CSS クラス。
 
-| クラス名                | 説明                             |
-| ----------------------- | -------------------------------- |
-| `df-event-detail-panel` | フローティングイベント詳細パネル |
-| `df-dialog-overlay`     | ダイアログ背景オーバーレイ       |
-| `df-dialog-container`   | ダイアログコンテンツコンテナ     |
-| `df-portal`             | フローティング UI の共通ルート   |
+| クラス名                   | 説明                                       |
+| -------------------------- | ------------------------------------------ |
+| `df-event-detail-panel`    | フローティングイベント詳細パネル           |
+| `df-event-dialog-overlay`  | イベント詳細ダイアログのオーバーレイルート |
+| `df-event-dialog-backdrop` | イベント詳細ダイアログの背景               |
+| `df-dialog-container`      | ダイアログコンテンツコンテナ               |
+| `df-event-dialog-close`    | イベント詳細ダイアログの閉じるボタン       |
+| `df-portal`                | フローティング UI の共通ルート             |
 
 ---
 
@@ -205,6 +280,47 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
 | ----------------- | --------------------------------------------------------------------------------- |
 | `df-content-slot` | コンテンツスロットのコンテナ                                                      |
 | `df-slot-[id]`    | 特定のスロットインスタンスに割り当てられる動的クラス。`[id]` は一意の識別子です。 |
+
+---
+
+## イベント状態属性
+
+すべてのカレンダーイベント要素には、現在の状態を反映する `data-*` 属性が付与されています。クラスを追加しなくても、CSS の属性セレクターで直接ターゲットにできます。
+
+| 属性                 | 値                                    | 説明                                   |
+| -------------------- | ------------------------------------- | -------------------------------------- |
+| `data-view`          | `"day"` `"week"` `"month"` `"year"`   | そのイベントを表示している現在のビュー |
+| `data-all-day`       | `"true"` `"false"`                    | 終日イベントかどうか                   |
+| `data-selected`      | `"true"` `"false"`                    | イベントが選択中かどうか               |
+| `data-dragging`      | `"true"` `"false"`                    | イベントがドラッグ中かどうか           |
+| `data-resizing`      | `"true"` `"false"`                    | イベントがリサイズ中かどうか           |
+| `data-multi-day`     | `"true"` `"false"`                    | 複数日にまたがるイベントかどうか       |
+| `data-editable`      | `"true"` `"false"`                    | イベントが編集可能かどうか             |
+| `data-segment-shape` | `"full"` `"start"` `"middle"` `"end"` | 複数セグメントイベントの角丸の形状     |
+
+### 例
+
+```css
+/* 選択中のイベント */
+.df-event[data-selected='true'] {
+  outline: 2px solid var(--df-color-primary);
+}
+
+/* ドラッグ中のイベント */
+.df-event[data-dragging='true'] {
+  opacity: 0.6;
+}
+
+/* 月ビューのイベントのみ */
+.df-event[data-view='month'] {
+  font-size: 11px;
+}
+
+/* 終日イベントのみ */
+.df-event[data-all-day='true'] {
+  font-weight: 600;
+}
+```
 
 ---
 
@@ -290,13 +406,23 @@ DayFlow は、カレンダーコンポーネントの外観をカスタマイズ
    }
    ```
 
-4. **CSS 変数**: DayFlow は色に CSS カスタムプロパティを使用しています。グローバルな色の変更にはこれらを上書きします：
+4. **CSS 変数**: DayFlow は `--df-color-*` カスタムプロパティで色を管理しています。`.df-calendar-container`（フローティング UI には `.df-portal` も）で上書きすると、スコープを絞った色変更ができます：
    ```css
-   :root {
-     --primary: #3b82f6;
-     --primary-foreground: #ffffff;
+   .df-calendar-container,
+   .df-portal {
+     --df-color-primary: #3b82f6;
+     --df-color-primary-foreground: #ffffff;
    }
    ```
+
+## 旧バージョンからのアップグレード
+
+<Callout title="破壊的変更：calendar-event クラスの削除" type="warn">
+  イベント要素から `calendar-event` クラスが削除されました。スタイルシートで `.calendar-event { ... }` を使用している場合は、`.df-event { ... }` に変更してください。
+
+以前 DayFlow の DOM 要素に付いていた Tailwind utility クラス（`flex`、`rounded-md`、`shadow-sm` など）もすべて削除されました。これらはパブリック API の一部ではありませんでした。すべての CSS カスタマイズには、ドキュメントに記載された `df-*` クラスと `data-*` 属性を使用してください。
+
+</Callout>
 
 ## 関連ドキュメント
 

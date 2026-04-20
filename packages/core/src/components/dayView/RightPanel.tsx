@@ -1,28 +1,11 @@
+import { RefObject } from 'preact';
+
+import { CalendarEvent } from '@/components/calendarEvent';
 import { MiniCalendar } from '@/components/common/MiniCalendar';
 import TodayBox from '@/components/common/TodayBox';
 import { useLocale } from '@/locale';
-import {
-  miniCalendarContainer,
-  headerContainer,
-  headerTitle,
-  flexCol,
-  p2,
-  p4,
-  mb3,
-  textXs,
-  textLg,
-  textSm,
-  textGray500,
-  textGray600,
-} from '@/styles/classNames';
-import { ICalendarApp, Event } from '@/types';
-import {
-  formatTime,
-  extractHourFromDate,
-  getCalendarLineColors,
-  buildColorBarGradient,
-  getEventEndHour,
-} from '@/utils';
+import { miniCalendarContainer } from '@/styles/classNames';
+import { ICalendarApp, Event, ViewType } from '@/types';
 import { temporalToVisualDate } from '@/utils/temporalTypeGuards';
 
 interface RightPanelProps {
@@ -38,6 +21,7 @@ interface RightPanelProps {
   timeFormat?: '12h' | '24h';
   showEventDots?: boolean;
   appTimeZone?: string;
+  calendarRef: RefObject<HTMLDivElement>;
 }
 
 export const RightPanel = ({
@@ -53,29 +37,34 @@ export const RightPanel = ({
   timeFormat = '24h',
   showEventDots = true,
   appTimeZone,
+  calendarRef,
 }: RightPanelProps) => {
   const { t, locale } = useLocale();
 
   const sortedEvents = [...currentDayEvents].toSorted((a, b) => {
     if (a.allDay && !b.allDay) return -1;
     if (!a.allDay && b.allDay) return 1;
+    if (!a.allDay && !b.allDay) {
+      const timeA = temporalToVisualDate(a.start, appTimeZone).getTime();
+      const timeB = temporalToVisualDate(b.start, appTimeZone).getTime();
+      return timeA - timeB;
+    }
     return 0;
   });
 
   return (
     <div
-      className={`df-right-panel hidden flex-none md:block ${switcherMode === 'buttons' ? '' : ''} w-[30%] bg-white dark:bg-gray-900`}
+      className='df-right-panel'
+      data-switcher-mode={switcherMode}
       onContextMenu={e => e.preventDefault()}
     >
-      <div className={`${flexCol} h-full`}>
+      <div className='df-right-panel-layout'>
         {/* Mini calendar */}
         <div className={miniCalendarContainer}>
-          <div>
-            <div className='flex items-center justify-end gap-2'>
-              <div className={headerContainer} style={{ position: 'relative' }}>
-                <div>
-                  <h1 className={headerTitle}>&nbsp;</h1>
-                </div>
+          <div className='df-right-panel-calendar-shell'>
+            <div className='df-right-panel-calendar-header'>
+              <div className='df-right-panel-header-spacer' aria-hidden='true'>
+                &nbsp;
               </div>
               <TodayBox
                 handlePreviousMonth={() => app.goToPrevious()}
@@ -98,11 +87,9 @@ export const RightPanel = ({
         </div>
 
         {/* Event details area */}
-        <div className={`flex-1 overflow-y-auto`}>
-          <div className={`${p4}`}>
-            <h3
-              className={`${textLg} font-semibold ${mb3} sticky top-0 z-10 bg-white py-2 dark:bg-gray-900`}
-            >
+        <div className='df-right-panel-events'>
+          <div className='df-right-panel-events-inner'>
+            <h3 className='df-right-panel-date-heading'>
               {currentDate.toLocaleDateString(locale, {
                 weekday: 'long',
                 month: 'long',
@@ -111,60 +98,37 @@ export const RightPanel = ({
             </h3>
 
             {sortedEvents.length === 0 ? (
-              <p className={`${textGray500} ${textSm}`}>{t('noEvents')}</p>
+              <p className='df-right-panel-empty'>{t('noEvents')}</p>
             ) : (
-              <div className='space-y-2'>
+              <div className='df-right-panel-list'>
                 {sortedEvents.map((event: Event) => (
-                  <div
-                    key={event.id}
-                    className={` ${p2} cursor-pointer rounded border-l-4 transition-colors ${selectedEvent?.id === event.id ? 'df-border-primary df-tint-primary' : 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800'} hover:bg-gray-100 dark:hover:bg-gray-700`}
-                    style={(() => {
-                      const lc = getCalendarLineColors(event);
-                      return {
-                        borderLeftColor: lc.length > 1 ? undefined : lc[0],
-                        borderLeftImage:
-                          lc.length > 1
-                            ? `${buildColorBarGradient(lc)} 1`
-                            : undefined,
-                      };
-                    })()}
-                    onClick={() => {
-                      setSelectedEvent(event);
-                      app.onEventClick(event);
-                    }}
-                  >
-                    <div className={`font-medium ${textSm}`}>{event.title}</div>
-                    {!event.allDay && (
-                      <div className={`${textXs} ${textGray600}`}>
-                        {formatTime(
-                          appTimeZone
-                            ? extractHourFromDate(
-                                temporalToVisualDate(event.start, appTimeZone)
-                              )
-                            : extractHourFromDate(event.start),
-                          0,
-                          timeFormat
-                        )}{' '}
-                        -{' '}
-                        {formatTime(
-                          appTimeZone
-                            ? extractHourFromDate(
-                                temporalToVisualDate(
-                                  event.end ?? event.start,
-                                  appTimeZone
-                                )
-                              )
-                            : getEventEndHour(event),
-                          0,
-                          timeFormat
-                        )}
-                      </div>
-                    )}
-                    {event.allDay && (
-                      <div className={`${textXs} ${textGray600}`}>
-                        {t('allDay')}
-                      </div>
-                    )}
+                  <div key={event.id} className='df-right-panel-event-item'>
+                    <CalendarEvent
+                      event={event}
+                      isAllDay={event.allDay}
+                      viewType={ViewType.DAY}
+                      calendarRef={calendarRef}
+                      onEventUpdate={updated =>
+                        app.updateEvent(updated.id, updated)
+                      }
+                      onEventDelete={id => app.deleteEvent(id)}
+                      onEventSelect={id => {
+                        if (!id) {
+                          setSelectedEvent(null);
+                          return;
+                        }
+                        const found = app.getEvents().find(e => e.id === id);
+                        setSelectedEvent(found || null);
+                      }}
+                      selectedEventId={selectedEvent?.id}
+                      app={app}
+                      timeFormat={timeFormat}
+                      appTimeZone={appTimeZone}
+                      hourHeight={0}
+                      firstHour={0}
+                      disableDefaultStyle={true}
+                      className='df-right-panel-event-card'
+                    />
                   </div>
                 ))}
               </div>

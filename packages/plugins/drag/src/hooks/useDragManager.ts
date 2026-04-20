@@ -110,11 +110,11 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
             ? Math.round(dayCellEl.getBoundingClientRect().width)
             : Math.min(sourceRect.width, 120);
           indicatorHeight = sourceRect.height;
-          indicator.className = `rounded-sm shadow-sm ${sourceElement.className}`;
+          indicator.className = `df-drag-indicator-month-pill ${sourceElement.className}`;
         } else {
           indicatorWidth = 120;
           indicatorHeight = 22;
-          indicator.className = 'rounded text-xs px-2 py-1';
+          indicator.className = 'df-drag-indicator-manual-pill';
         }
 
         indicator.style.width = `${indicatorWidth}px`;
@@ -216,13 +216,16 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
             indicator.style.margin = '0';
             indicator.style.opacity = '0.8';
             indicator.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            indicator.style.borderRadius = drag.allDay ? '0.75rem' : '0.25rem';
           }
         } else if (drag.allDay) {
           // Calculate position logic
           indicator.style.top = '2px';
           indicator.style.height = `${ALL_DAY_HEIGHT - 4}px`;
           indicator.style.marginBottom = '3px';
-          indicator.className = 'rounded-xl shadow-sm';
+          indicator.className = 'df-drag-indicator-all-day-pill';
+          indicator.style.borderRadius = '0.75rem';
+          indicator.style.boxShadow = '0 1px 2px rgb(0 0 0 / 0.12)';
 
           if (isDayView) {
             indicator.style.left = `${TIME_COLUMN_WIDTH}px`;
@@ -245,7 +248,9 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
             : `${top + 3 + gridOffset}px`;
           indicator.style.height = `${height - 4}px`;
           indicator.style.color = '#fff';
-          indicator.className = 'rounded-sm shadow-sm';
+          indicator.className = 'df-drag-indicator-regular-pill';
+          indicator.style.borderRadius = '0.25rem';
+          indicator.style.boxShadow = '0 1px 2px rgb(0 0 0 / 0.12)';
 
           const daysToShow = options.displayDays || 7;
           const totalWidth = isInsideTimeGrid
@@ -348,7 +353,7 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
             indicator.style.color = resolvedTextColor;
           } else {
             indicator.className +=
-              ' df-tint-primary border border-dashed df-border-primary-soft';
+              ' df-tint-primary df-drag-indicator-ghost df-border-primary-soft';
           }
         }
       } else if (drag.calendarIds && drag.calendarIds.length > 1) {
@@ -378,7 +383,7 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
         indicator.style.color = '#fff';
       } else {
         indicator.className +=
-          ' df-tint-primary border border-dashed df-border-primary-soft';
+          ' df-tint-primary df-drag-indicator-ghost df-border-primary-soft';
       }
 
       dragIndicatorRef.current = indicator;
@@ -473,9 +478,10 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
           }
           indicator.style.marginBottom = '3px';
           indicator.className = indicator.className.replace(
-            'rounded-sm',
-            'rounded-xl'
+            'df-drag-indicator-regular-pill',
+            'df-drag-indicator-all-day-pill'
           );
+          indicator.style.borderRadius = '0.75rem';
         } else {
           const gridOffset = isInsideTimeGrid ? 0 : getGridOffset();
           const top = (startHour - FIRST_HOUR) * HOUR_HEIGHT;
@@ -486,9 +492,10 @@ export const useDragManager = (options: useDragProps): UseDragManagerReturn => {
           indicator.style.height = `${height - 4}px`;
           indicator.style.marginBottom = '0';
           indicator.className = indicator.className.replace(
-            'rounded-xl',
-            'rounded-sm'
+            'df-drag-indicator-all-day-pill',
+            'df-drag-indicator-regular-pill'
           );
+          indicator.style.borderRadius = '0.25rem';
 
           const daysToShow = options.displayDays || 7;
           const totalWidth = isInsideTimeGrid

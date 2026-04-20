@@ -186,28 +186,6 @@ DayFlow 提供两个 CSS 产物：
 
 如果项目**不使用** Tailwind，改为导入完整包：
 
-### 工具类扫描（`@source`）
-
-DayFlow 的组件内部仍会使用 Tailwind 工具类（如 `flex`、`bg-white`、`text-gray-600`）来处理布局和中性色样式，因此你的 Tailwind 实例仍需扫描 DayFlow 的文件来生成这些类。但旧的语义类（如 `bg-primary`、`text-primary`）已经不再是 DayFlow 内部的依赖。
-
-当你导入 `@dayflow/core/dist/styles.components.css` 时，Tailwind 仍然需要扫描 DayFlow 已发布的 JavaScript 文件，才能发现库内部用到的工具类。Tailwind 的自动扫描不会包含 `node_modules`，所以即使使用 Vite + `@tailwindcss/vite`，这一步 `@source` 仍然是必需的。
-
-请在 CSS 入口文件中添加 `@source` 指令：
-
-```css
-@import '@dayflow/core/dist/styles.components.css';
-@import 'tailwindcss';
-
-/* 使用已发布的 npm 包时必需 */
-@source '../node_modules/@dayflow/core/dist/**/*.js';
-@source '../node_modules/@dayflow/plugin-drag/dist/**/*.js'; /* 使用拖拽插件时 */
-@source '../node_modules/@dayflow/plugin-sidebar/dist/**/*.js'; /* 使用侧边栏插件时 */
-```
-
-如果缺少此配置，Tailwind 将无法生成 DayFlow 组件内部大量依赖的工具类，界面可能会部分或完全失去样式。
-
-如果你是在本地 DayFlow workspace 中联调源码，而不是使用已发布的 npm 包，那么请把 `@source` 指向对应 workspace 里的源码目录。
-
 ```css
 /* app.css — 非 Tailwind 项目 */
 @import '@dayflow/core/dist/styles.css';
@@ -225,19 +203,19 @@ document.documentElement.classList.toggle('dark', isDark);
 
 **在 Tailwind v4 中使用 `theme.mode`**
 
-Tailwind v4 默认将 `dark:` 工具类编译为 `@media (prefers-color-scheme: dark)`。DayFlow 的 `theme.mode` 通过给 `<html>` 添加 `.dark` 类来切换主题——如果你的 Tailwind 使用媒体查询方式，DayFlow 组件内部的 `dark:` 工具类将无法响应类名切换。
+DayFlow 发布的 CSS 已经内置了 `theme.mode` 所需的 `.dark` variant。在 Tailwind v4 项目里，只要导入 `@dayflow/core/dist/styles.components.css`，DayFlow 自身就会响应 `<html>` 上的 `.dark` 类切换。
 
-在你的 CSS 入口文件中添加以下内容，将 Tailwind 切换为基于类名的深色模式：
+如果你还希望项目里你自己写的 Tailwind `dark:` 工具类也跟随这个类名切换，再在 CSS 入口里补上 class-based 配置：
 
 ```css
 @import '@dayflow/core/dist/styles.components.css';
 @import 'tailwindcss';
 
-/* theme.mode 正常工作所必需：让 dark: 工具类响应 .dark 类名 */
+/* 可选：只有你自己的 Tailwind dark: 工具类需要跟随 .dark 时才需要 */
 @variant dark (.dark &);
 ```
 
-如果缺少此配置，`theme.mode: 'dark'` 仍会正确更新 CSS 自定义属性（`--df-color-*`），但 DayFlow 组件内部的 `dark:` 工具类只会在系统偏好为深色时才生效。
+如果不加这行，DayFlow 仍会通过 `theme.mode` 正常切换；只是你项目自己的 Tailwind `dark:` 工具类仍然保持 Tailwind 默认的媒体查询行为。
 
 ### 实践建议
 

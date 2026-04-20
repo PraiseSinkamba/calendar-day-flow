@@ -70,6 +70,8 @@ interface TimeGridProps {
   ) => void;
   handleEventUpdate: (event: CalendarEvent) => void;
   handleEventDelete: (id: string) => void;
+  setDraftEvent: (event: CalendarEvent | null) => void;
+  setIsDrawerOpen: (isOpen: boolean) => void;
 
   onDateChange?: (date: Date) => void;
   newlyCreatedEventId: string | null;
@@ -119,6 +121,8 @@ export const TimeGrid = ({
   handleResizeStart,
   handleEventUpdate,
   handleEventDelete,
+  setDraftEvent,
+  setIsDrawerOpen,
   onDateChange,
   newlyCreatedEventId,
   setNewlyCreatedEventId,
@@ -193,35 +197,40 @@ export const TimeGrid = ({
   };
 
   return (
-    <div className='relative flex flex-1 overflow-hidden'>
+    <div className='df-week-time-grid'>
       {/* Single scrolling container using CSS Grid (auto | 1fr).
-          "auto" sizes the time-label column to its rendered Tailwind width
-          (w-12 on mobile, md:w-20 on desktop) without needing JS.
+          "auto" sizes the time-label column from the semantic time-column rules
+          without needing JS.
           Both columns share the same scroll context so they scroll
           vertically together natively — no JS transform sync needed. */}
       <div
         ref={scrollerRef}
-        className={`df-calendar-content relative flex-1 overflow-auto ${gridWidth === '300%' ? 'overflow-x-hidden' : 'snap-x snap-mandatory'}`}
-        style={{ display: 'grid', gridTemplateColumns: 'auto 1fr' }}
+        className='df-calendar-content df-week-time-grid-scroller df-week-time-grid-scroller-shell'
+        data-sliding-view={gridWidth === '300%' ? 'true' : 'false'}
+        style={{ gridTemplateColumns: 'auto 1fr' }}
         onScroll={handleScroll}
       >
-        {/* Time label column — first grid column (auto width = w-12 / md:w-20).
+        {/* Time label column — first grid column (auto width from semantic CSS).
             No overflow-hidden: renders at full content height alongside the grid. */}
         <div
           ref={leftFrozenContentRef}
-          className='sticky left-0 z-10 w-12 shrink-0 bg-white md:w-20 dark:bg-gray-900'
+          className='df-week-time-grid-time-column'
+          data-secondary-tz={showSecondaryTz ? 'true' : 'false'}
           onContextMenu={e => e.preventDefault()}
         >
           {/* Top boundary spacer — expands to include timezone header when active */}
-          <div className={`relative h-3`}>
+          <div
+            className='df-time-column-spacer df-time-week-column-spacer'
+            data-secondary-tz={showSecondaryTz ? 'true' : 'false'}
+          >
             {showSecondaryTz ? (
               <>
                 {/* Start-of-day label */}
-                <div className='absolute right-0 -bottom-1 flex w-full items-center justify-evenly select-none'>
-                  <span className='text-[10px] text-gray-500 md:text-[12px] dark:text-gray-400'>
+                <div className='df-time-column-tz-row df-time-column-tz-row-boundary'>
+                  <span className='df-time-column-tz-value'>
                     {showStartOfDayLabel ? (secondaryTimeSlots?.[0] ?? '') : ''}
                   </span>
-                  <span className='text-[10px] text-gray-500 md:text-[12px] dark:text-gray-400'>
+                  <span className='df-time-column-tz-value'>
                     {showStartOfDayLabel
                       ? formatTime(FIRST_HOUR, 0, timeFormat)
                       : ''}
@@ -229,7 +238,7 @@ export const TimeGrid = ({
                 </div>
               </>
             ) : (
-              <div className='absolute right-2 -bottom-1 text-[10px] text-gray-500 select-none md:text-[12px] dark:text-gray-400'>
+              <div className='df-time-column-boundary-label'>
                 {showStartOfDayLabel
                   ? formatTime(FIRST_HOUR, 0, timeFormat)
                   : ''}
@@ -239,37 +248,35 @@ export const TimeGrid = ({
           {timeSlots.map((slot, slotIndex) => (
             <div key={slotIndex} className={timeSlot}>
               {showSecondaryTz ? (
-                <div className='absolute top-0 right-0 flex w-full -translate-y-1/2 items-center justify-evenly text-gray-500 select-none dark:text-gray-400'>
-                  <span className='text-[10px] md:text-[12px]'>
+                <div className='df-time-column-tz-row'>
+                  <span className='df-time-column-tz-value'>
                     {showStartOfDayLabel && slotIndex === 0
                       ? ''
                       : (secondaryTimeSlots?.[slotIndex] ?? '')}
                   </span>
-                  <span className='text-[10px] md:text-[12px]'>
+                  <span className='df-time-column-tz-value'>
                     {showStartOfDayLabel && slotIndex === 0 ? '' : slot.label}
                   </span>
                 </div>
               ) : (
-                <div className={`${timeLabel} text-[10px] md:text-[12px]`}>
+                <div className={timeLabel}>
                   {showStartOfDayLabel && slotIndex === 0 ? '' : slot.label}
                 </div>
               )}
             </div>
           ))}
-          <div className='relative'>
+          <div className='df-week-time-grid-boundary-tail'>
             {showSecondaryTz ? (
-              <div className='absolute top-0 right-0 flex w-full -translate-y-1/2 items-center justify-evenly text-gray-500 select-none dark:text-gray-400'>
-                <span className='text-[10px] md:text-[12px]'>
+              <div className='df-time-column-tz-row'>
+                <span className='df-time-column-tz-value'>
                   {secondaryTimeSlots?.[0] ?? ''}
                 </span>
-                <span className='text-[10px] md:text-[12px]'>
+                <span className='df-time-column-tz-value'>
                   {formatTime(0, 0, timeFormat)}
                 </span>
               </div>
             ) : (
-              <div className={`${timeLabel} text-[10px] md:text-[12px]`}>
-                {formatTime(0, 0, timeFormat)}
-              </div>
+              <div className={timeLabel}>{formatTime(0, 0, timeFormat)}</div>
             )}
           </div>
           {/* Current Time Label */}
@@ -284,10 +291,9 @@ export const TimeGrid = ({
 
               return (
                 <div
-                  className='pointer-events-none absolute left-0 z-20 flex w-full items-center justify-end'
+                  className='df-week-time-grid-current-time-label'
                   style={{
                     top: `${topPx}px`,
-                    transform: 'translateY(-50%)',
                     marginTop: '0.75rem',
                   }}
                 >
@@ -303,7 +309,7 @@ export const TimeGrid = ({
             gridWidth is relative to this grid track (scroller - sidebarWidth). */}
         <div
           ref={swipeContentRef}
-          className='flex'
+          className='df-week-time-grid-content'
           style={{
             width: gridWidth,
             minWidth: '100%',
@@ -313,18 +319,23 @@ export const TimeGrid = ({
           }}
         >
           {/* Time Grid */}
-          <div className='grow'>
+          <div className='df-week-time-grid-grid'>
             {/* Top boundary — height must match left column spacer */}
-            <div className={`${timeGridBoundary} flex border-t-0`}>
+            <div
+              className={`${timeGridBoundary} df-time-grid-boundary-top df-week-time-grid-boundary-row`}
+              data-scrollbar-space={
+                isMobile || !hasScrollbarSpace ? 'false' : 'true'
+              }
+            >
               {weekDaysLabels.map((_, dayIndex) => (
                 <div
-                  key={`top-${dayIndex}`}
-                  className={`relative flex-1 ${dayIndex === weekDaysLabels.length - 1 && (isMobile || !hasScrollbarSpace) ? '' : 'border-r'} border-gray-200 dark:border-gray-700`}
+                  key={`boundary_${dayIndex}`}
+                  className='df-week-time-grid-boundary-cell'
                   style={columnStyle}
                 />
               ))}
             </div>
-            <div ref={timeGridRef} className='relative'>
+            <div ref={timeGridRef} className='df-week-time-grid-grid-inner'>
               {/* Current time line */}
               {isCurrentWeek &&
                 currentTime &&
@@ -348,33 +359,29 @@ export const TimeGrid = ({
                       className={currentTimeLine}
                       style={{
                         top: `${topPx}px`,
-                        width: '100%',
                         height: 0,
                         zIndex: 20,
                       }}
                     >
-                      <div className='flex w-0 items-center'>
+                      <div className='df-week-time-grid-current-time-spacer'>
                         {/* Empty left part since it is in frozen column now */}
                       </div>
 
-                      <div className='flex flex-1'>
+                      <div className='df-week-time-grid-current-time-track'>
                         {weekDaysLabels.map((_, idx) => (
-                          <div key={idx} className='flex flex-1 items-center'>
+                          <div
+                            key={idx}
+                            className='df-week-time-grid-current-time-cell'
+                          >
                             <div
-                              className={`relative h-0.5 w-full ${
-                                idx === todayIndex
-                                  ? 'df-fill-primary'
-                                  : 'df-tint-primary-lg'
-                              }`}
+                              className='df-week-time-grid-current-line-rail'
+                              data-today={idx === todayIndex ? 'true' : 'false'}
                               style={{
                                 zIndex: 9999,
                               }}
                             >
                               {idx === todayIndex && todayIndex !== 0 && (
-                                <div
-                                  className='df-fill-primary absolute h-2 w-2 rounded-full'
-                                  style={{ top: '-3px', left: '-4px' }}
-                                />
+                                <div className='df-week-time-grid-current-line-dot' />
                               )}
                             </div>
                           </div>
@@ -385,14 +392,20 @@ export const TimeGrid = ({
                 })()}
 
               {timeSlots.map((slot, slotIndex) => (
-                <div key={slotIndex} className={timeGridRow}>
+                <div
+                  key={slotIndex}
+                  className={timeGridRow}
+                  data-scrollbar-space={
+                    isMobile || !hasScrollbarSpace ? 'false' : 'true'
+                  }
+                >
                   {weekDaysLabels.map((_, dayIndex) => {
                     const dropDate = new Date(currentWeekStart);
                     dropDate.setDate(currentWeekStart.getDate() + dayIndex);
                     return (
                       <div
                         key={`${slotIndex}-${dayIndex}`}
-                        className={`${timeGridCell} snap-start ${dayIndex === weekDaysLabels.length - 1 && (isMobile || !hasScrollbarSpace) ? 'border-r-0' : ''}`}
+                        className={`${timeGridCell} df-week-time-grid-cell`}
                         style={columnStyle}
                         onClick={() => {
                           const clickedDate = new Date(currentWeekStart);
@@ -437,11 +450,16 @@ export const TimeGrid = ({
               ))}
 
               {/* Bottom boundary */}
-              <div className={`${timeGridBoundary} flex`}>
+              <div
+                className={`${timeGridBoundary} df-time-grid-boundary-bottom df-week-time-grid-boundary-row`}
+                data-scrollbar-space={
+                  isMobile || !hasScrollbarSpace ? 'false' : 'true'
+                }
+              >
                 {weekDaysLabels.map((_, dayIndex) => (
                   <div
                     key={`24-${dayIndex}`}
-                    className={`relative flex-1 ${dayIndex === weekDaysLabels.length - 1 && (isMobile || !hasScrollbarSpace) ? '' : 'border-r'} border-gray-200 dark:border-gray-700`}
+                    className='df-week-time-grid-boundary-cell'
                     style={columnStyle}
                   />
                 ))}
@@ -503,7 +521,7 @@ export const TimeGrid = ({
                 return (
                   <div
                     key={`events-day-${dayIndex}`}
-                    className='pointer-events-none absolute top-0'
+                    className='df-week-time-grid-event-layer'
                     style={{
                       left: `calc(${(100 / daysToShow) * dayIndex}%)`,
                       width: `${100 / daysToShow}%`,
@@ -543,6 +561,19 @@ export const TimeGrid = ({
                           selectedEventId={selectedEventId}
                           detailPanelEventId={detailPanelEventId}
                           onEventSelect={(eventId: string | null) => {
+                            const isViewable =
+                              app.getReadOnlyConfig(eventId ?? undefined)
+                                .viewable !== false;
+                            const evt = currentWeekEvents.find(
+                              currentEvent => currentEvent.id === eventId
+                            );
+
+                            if ((isMobile || isTouch) && evt && isViewable) {
+                              setDraftEvent(evt);
+                              setIsDrawerOpen(true);
+                              return;
+                            }
+
                             setSelectedEventId(eventId);
                             if (app.state.highlightedEventId) {
                               app.highlightEvent(null);

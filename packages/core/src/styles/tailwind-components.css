@@ -18,7 +18,6 @@
 /* @tailwindcss/theme is imported here only to resolve @apply at build time.
  * It does not emit utility classes into the compiled output. */
 @import 'tailwindcss/theme' layer(theme);
-@import '@dayflow/blossom-color-picker/styles.css';
-@import './shared-foundation.css';
+@import './library-imports.css';
 
 @variant dark (.dark &);

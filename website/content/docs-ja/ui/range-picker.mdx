@@ -10,6 +10,15 @@ Temporal API をベースにした日付/時刻の範囲選択コンポーネン
 
 <PackageTabs pkg='@dayflow/ui-range-picker' />
 
+すでに Tailwind CSS を使っている場合は、コンポーネント専用バンドルを読み込んでください。
+
+```css
+@import '@dayflow/ui-range-picker/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+Tailwind を使っていない場合は、従来どおり完全なスタイルシートを読み込みます。
+
 ```tsx
 import { RangePicker } from '@dayflow/ui-range-picker';
 import '@dayflow/ui-range-picker/dist/styles.css';

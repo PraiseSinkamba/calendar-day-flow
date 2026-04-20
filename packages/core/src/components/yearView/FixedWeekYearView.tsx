@@ -13,7 +13,6 @@ import ViewHeader from '@/components/common/ViewHeader';
 import { GridContextMenu } from '@/components/contextMenu';
 import { useLocale } from '@/locale';
 import { useDragForView } from '@/plugins/dragBridge';
-import { scrollbarHide } from '@/styles/classNames';
 import {
   Event,
   MonthEventDragState,
@@ -26,6 +25,7 @@ import {
 import {
   getTodayInTimeZone,
   hasEventChanged,
+  scrollbarTakesSpace,
   temporalToVisualDate,
 } from '@/utils';
 
@@ -87,6 +87,8 @@ export const FixedWeekYearView = ({
   const [internalDetailPanelEventId, setInternalDetailPanelEventId] = useState<
     string | null
   >(null);
+
+  const hasScrollbarSpace = useMemo(() => scrollbarTakesSpace(), []);
 
   const selectedEventId =
     propSelectedEventId === undefined
@@ -413,17 +415,9 @@ export const FixedWeekYearView = ({
   };
 
   return (
-    <div
-      className='h-full overflow-hidden bg-white select-none dark:bg-gray-900'
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '3rem 1fr',
-        gridTemplateRows: 'auto auto 1fr',
-      }}
-      onContextMenu={e => e.preventDefault()}
-    >
+    <div className='df-year-fixed' onContextMenu={e => e.preventDefault()}>
       {/* Year Header */}
-      <div className='col-span-2'>
+      <div className='df-year-fixed-header-span'>
         <ViewHeader
           calendar={app}
           viewType={ViewType.YEAR}
@@ -446,19 +440,16 @@ export const FixedWeekYearView = ({
       </div>
 
       {/* Corner - Fixed */}
-      <div className='z-30 border-r border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900' />
+      <div className='df-year-fixed-corner' />
 
       {/* Week Labels Header */}
-      <div
-        ref={weekLabelsRef}
-        className='overflow-hidden border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900'
-      >
+      <div ref={weekLabelsRef} className='df-year-fixed-week-header'>
         <div
-          className='flex'
+          className='df-year-fixed-week-header-inner'
           style={{ minWidth: `calc(1352px + ${scrollbarWidth}px)` }}
         >
           <div
-            className='grid flex-1'
+            className='df-year-fixed-week-grid'
             style={{
               gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
               minWidth: '1352px',
@@ -470,7 +461,8 @@ export const FixedWeekYearView = ({
               return (
                 <div
                   key={`label-${i}`}
-                  className={`border-r border-gray-200 py-2 text-center text-[10px] font-bold tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400 ${isWeekend ? 'df-year-view-weekend-header' : ''}`}
+                  className='df-year-fixed-week-label'
+                  data-weekend={isWeekend ? 'true' : 'false'}
                 >
                   {label}
                 </div>
@@ -480,7 +472,8 @@ export const FixedWeekYearView = ({
           {/* Spacer to compensate for vertical scrollbar in content area */}
           {scrollbarWidth > 0 && (
             <div
-              className='shrink-0 bg-gray-50 dark:bg-gray-900'
+              className='df-year-fixed-week-spacer'
+              data-scrollbar-space={hasScrollbarSpace ? 'true' : 'false'}
               style={{ width: `${scrollbarWidth}px` }}
             />
           )}
@@ -488,15 +481,12 @@ export const FixedWeekYearView = ({
       </div>
 
       {/* Month Labels Sidebar */}
-      <div
-        ref={monthLabelsRef}
-        className='overflow-hidden border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
-      >
-        <div className='flex min-h-full flex-col'>
+      <div ref={monthLabelsRef} className='df-year-fixed-month-sidebar'>
+        <div className='df-year-fixed-month-sidebar-inner'>
           {effectiveMonthsData.map(month => (
             <div
               key={month.monthIndex}
-              className='flex shrink-0 grow items-center justify-center border-b border-gray-200 text-[10px] font-bold text-gray-500 dark:border-gray-700 dark:text-gray-400'
+              className='df-year-fixed-month-label'
               style={{
                 minHeight: `${month.minHeight}px`,
                 transition: 'min-height 180ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -508,7 +498,8 @@ export const FixedWeekYearView = ({
           {/* Spacer to compensate for horizontal scrollbar in content area */}
           {scrollbarHeight > 0 && (
             <div
-              className='shrink-0 bg-white dark:bg-gray-900'
+              className='df-year-fixed-month-spacer'
+              data-scrollbar-space={hasScrollbarSpace ? 'true' : 'false'}
               style={{ height: `${scrollbarHeight}px` }}
             />
           )}
@@ -518,11 +509,11 @@ export const FixedWeekYearView = ({
       {/* Days Grid Content - Scrollable */}
       <div
         ref={contentRef}
-        className={`overflow-auto ${scrollbarHide}`}
+        className='df-year-fixed-content'
         onScroll={handleContentScroll}
       >
         <div
-          className='flex min-h-full flex-col'
+          className='df-year-fixed-content-inner'
           style={{ minWidth: '1352px' }}
         >
           {effectiveMonthsData.map(effectiveMonthData => {
@@ -548,7 +539,7 @@ export const FixedWeekYearView = ({
             return (
               <div
                 key={effectiveMonthData.monthIndex}
-                className='relative shrink-0 grow'
+                className='df-year-fixed-month-row'
                 style={{
                   minHeight: `${effectiveMonthData.minHeight}px`,
                   transition: 'min-height 180ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -556,7 +547,7 @@ export const FixedWeekYearView = ({
               >
                 {/* Background grid cells */}
                 <div
-                  className='absolute inset-0 z-0 grid'
+                  className='df-year-fixed-background-grid'
                   style={{
                     gridTemplateColumns: `repeat(${totalColumns}, minmax(0, 1fr))`,
                   }}
@@ -569,7 +560,8 @@ export const FixedWeekYearView = ({
                       return (
                         <div
                           key={`empty-${effectiveMonthData.monthIndex}-${dayIndex}`}
-                          className={`border-r border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-800/40 ${isWeekend ? 'df-year-view-weekend-cell' : ''}`}
+                          className='df-year-fixed-empty-cell'
+                          data-weekend={isWeekend ? 'true' : 'false'}
                         />
                       );
                     }
@@ -583,13 +575,16 @@ export const FixedWeekYearView = ({
                       <div
                         key={date.getTime()}
                         data-date={dateString}
-                        className={`df-hover-primary-dark-md relative flex cursor-pointer items-start justify-end border-r border-b border-gray-200 p-0.5 transition-colors ${isDragging ? '' : 'hover:bg-blue-100'} dark:border-gray-700 ${isWeekend ? 'df-year-view-weekend-cell bg-blue-50 dark:bg-blue-900/30' : ''} `}
+                        className='df-year-fixed-day-cell'
+                        data-dragging={isDragging ? 'true' : 'false'}
+                        data-weekend={isWeekend ? 'true' : 'false'}
                         onClick={() => app.selectDate(date)}
                         onDblClick={e => handleCellDoubleClick(e, date)}
                         onContextMenu={e => handleContextMenu(e, date)}
                       >
                         <span
-                          className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-medium ${isToday ? 'df-fill-primary font-bold shadow-sm' : 'text-gray-700 dark:text-gray-300'} `}
+                          className='df-year-fixed-day-number'
+                          data-today={isToday ? 'true' : 'false'}
                         >
                           {date.getDate()}
                         </span>
@@ -601,12 +596,15 @@ export const FixedWeekYearView = ({
                 {/* Event segments overlay */}
                 {renderedSegments.length > 0 && (
                   <div
-                    className='pointer-events-none absolute inset-0 z-20'
+                    className='df-year-fixed-event-layer'
                     style={{ top: 20 }}
                   >
-                    <div className='relative h-full w-full'>
+                    <div className='df-year-fixed-event-layer-inner'>
                       {renderedSegments.map(segment => (
-                        <div key={segment.id} className='pointer-events-auto'>
+                        <div
+                          key={segment.id}
+                          className='df-year-fixed-event-hitbox'
+                        >
                           <CalendarEvent
                             event={segment.event}
                             isAllDay={!!segment.event.allDay}

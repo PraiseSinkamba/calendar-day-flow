@@ -6,12 +6,12 @@ import { GridContextMenu } from '@/components/contextMenu';
 import { MultiDayEventSegment } from '@/components/monthView/util';
 import {
   allDayRow,
+  allDayLabel,
   allDayContent,
   allDayCell,
   weekDayHeader,
   weekDayCell,
   dateNumber,
-  miniCalendarToday,
 } from '@/styles/classNames';
 import {
   Event,
@@ -72,6 +72,8 @@ interface AllDayRowProps {
   ) => void;
   handleEventUpdate: (event: Event) => void;
   handleEventDelete: (id: string) => void;
+  setDraftEvent: (event: Event | null) => void;
+  setIsDrawerOpen: (isOpen: boolean) => void;
   onDateChange?: (date: Date) => void;
   newlyCreatedEventId: string | null;
   setNewlyCreatedEventId: (id: string | null) => void;
@@ -125,6 +127,8 @@ export const AllDayRow = ({
   handleResizeStart,
   handleEventUpdate,
   handleEventDelete,
+  setDraftEvent,
+  setIsDrawerOpen,
   onDateChange,
   newlyCreatedEventId,
   setNewlyCreatedEventId,
@@ -167,7 +171,7 @@ export const AllDayRow = ({
   };
 
   return (
-    <div className='flex w-full flex-col'>
+    <div className='df-week-all-day'>
       {/* Mobile 7-day Header with Segmented Control */}
       {isSlidingView && fullWeekDates && mobilePageStart && (
         <CompactHeader
@@ -179,26 +183,28 @@ export const AllDayRow = ({
       )}
 
       <div
-        className={`flex flex-none ${showAllDay ? 'border-b border-gray-200 dark:border-gray-700' : ''} relative z-10`}
+        className='df-week-all-day-shell'
+        data-show-all-day={showAllDay ? 'true' : 'false'}
         onContextMenu={e => e.preventDefault()}
       >
         {/* Left Frozen Column - outside scroll area, matching TimeGrid sidebar */}
         {showAllDay && (
           <div
-            className='z-20 flex w-12 shrink-0 flex-col bg-white md:w-20 dark:bg-gray-900'
+            className='df-week-all-day-side'
             onContextMenu={e => e.preventDefault()}
           >
             {/* Header spacer - flexes to match weekday header height */}
             <div
-              className={`flex flex-1 items-center border-b border-gray-200 transition-all duration-300 ease-in-out dark:border-gray-700 ${isSlidingView ? 'hidden' : ''}`}
+              className='df-week-all-day-side-spacer'
+              data-sliding-view={isSlidingView ? 'true' : 'false'}
             >
               {/* Timezone header: secondary LEFT, primary RIGHT */}
               {showSecondaryTz && (
-                <div className='flex w-full items-center justify-evenly gap-0.5 pt-2 pb-0.5'>
-                  <span className='text-[9px] text-gray-500 select-none md:text-[10px] dark:text-gray-400'>
+                <div className='df-time-column-tz-header df-time-column-tz-header-compact'>
+                  <span className='df-time-column-tz-label'>
                     {secondaryTzLabel}
                   </span>
-                  <span className='text-[9px] text-gray-500 select-none md:text-[10px] dark:text-gray-400'>
+                  <span className='df-time-column-tz-label'>
                     {primaryTzLabel}
                   </span>
                 </div>
@@ -206,7 +212,7 @@ export const AllDayRow = ({
             </div>
             {/* All Day Label */}
             <div
-              className='flex items-center justify-end p-1 text-[10px] font-medium text-gray-500 transition-[min-height] duration-300 ease-in-out select-none md:text-xs dark:text-gray-400'
+              className={`${allDayLabel} df-week-all-day-label`}
               style={{ minHeight: `${allDayAreaHeight}px` }}
             >
               {allDayLabelText}
@@ -216,7 +222,7 @@ export const AllDayRow = ({
 
         {/* Top Frozen Content - overflow hidden, content positioned via transform */}
         <div
-          className='relative flex-1 overflow-hidden transition-[min-height] duration-300 ease-in-out'
+          className='df-week-all-day-content-wrap'
           style={{
             scrollbarGutter: 'stable',
             minHeight: showAllDay
@@ -226,7 +232,7 @@ export const AllDayRow = ({
         >
           <div
             ref={topFrozenContentRef}
-            className='flex flex-col'
+            className='df-week-all-day-content'
             style={{
               width: gridWidth,
               minWidth: '100%',
@@ -239,6 +245,7 @@ export const AllDayRow = ({
             {!isSlidingView && (
               <div
                 className={weekDayHeader}
+                data-scrollbar-space={hasScrollbarSpace ? 'true' : 'false'}
                 style={{
                   marginRight: hasScrollbarSpace ? '-50px' : '0px',
                   paddingRight: hasScrollbarSpace ? '50px' : '0px',
@@ -247,27 +254,30 @@ export const AllDayRow = ({
                 {weekDaysLabels.map((day, i) => (
                   <div
                     key={i}
-                    className={`${weekDayCell} ${isMobile ? 'flex-col gap-0' : ''}`}
+                    className={`${weekDayCell} df-week-all-day-weekday-cell`}
+                    data-mobile={isMobile ? 'true' : 'false'}
                     style={columnStyle}
                   >
                     {isMobile ? (
                       <>
-                        <div className='text-[12px] leading-tight font-medium text-gray-500'>
+                        <div className='df-week-all-day-weekday-label'>
                           {mobileWeekDaysLabels[i]}
                         </div>
                         <div
-                          className={`${dateNumber} h-7 w-7 text-base font-medium ${weekDates[i].isToday ? miniCalendarToday : ''}`}
+                          className={`${dateNumber} df-week-all-day-date-number df-week-all-day-date-number-mobile`}
+                          data-today={weekDates[i].isToday ? 'true' : undefined}
                         >
                           {weekDates[i].date}
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className='mt-1 mr-1 inline-flex items-center justify-center text-sm'>
+                        <div className='df-week-all-day-weekday-name'>
                           {day}
                         </div>
                         <div
-                          className={`${dateNumber} ${weekDates[i].isToday ? miniCalendarToday : ''}`}
+                          className={`${dateNumber} df-week-all-day-date-number`}
+                          data-today={weekDates[i].isToday ? 'true' : undefined}
                         >
                           {weekDates[i].date}
                         </div>
@@ -281,12 +291,15 @@ export const AllDayRow = ({
             {/* All-day event area */}
             {showAllDay && (
               <div
-                className={`${allDayRow} relative border-none transition-[min-height] duration-300 ease-in-out`}
+                className={`${allDayRow} df-week-all-day-row`}
                 ref={allDayRowRef}
                 style={{ minHeight: `${allDayAreaHeight}px` }}
               >
                 <div
-                  className={`${allDayContent} transition-[min-height] duration-300 ease-in-out`}
+                  className={`${allDayContent} df-week-all-day-row-content`}
+                  data-scrollbar-space={
+                    isMobile || !hasScrollbarSpace ? 'false' : 'true'
+                  }
                   style={{ minHeight: `${allDayAreaHeight}px` }}
                 >
                   {weekDaysLabels.map((_, dayIndex) => {
@@ -295,7 +308,7 @@ export const AllDayRow = ({
                     return (
                       <div
                         key={`allday-${dayIndex}`}
-                        className={`${allDayCell} transition-[min-height] duration-300 ease-in-out ${dayIndex === weekDaysLabels.length - 1 && (isMobile || !hasScrollbarSpace) ? 'border-r-0' : ''}`}
+                        className={`${allDayCell} df-week-all-day-cell ${dayIndex === weekDaysLabels.length - 1 && (isMobile || !hasScrollbarSpace) ? 'df-week-all-day-cell-no-border' : ''}`}
                         style={{
                           minHeight: `${allDayAreaHeight}px`,
                           ...columnStyle,
@@ -313,7 +326,7 @@ export const AllDayRow = ({
                     );
                   })}
                   {/* Multi-day event overlay */}
-                  <div className='pointer-events-none absolute inset-0'>
+                  <div className='df-week-all-day-event-layer'>
                     {organizedAllDaySegments.map(segment => (
                       <CalendarEventComponent
                         key={segment.event.id}
@@ -343,6 +356,20 @@ export const AllDayRow = ({
                         selectedEventId={selectedEventId}
                         detailPanelEventId={detailPanelEventId}
                         onEventSelect={(eventId: string | null) => {
+                          const isViewable =
+                            app.getReadOnlyConfig(eventId ?? undefined)
+                              .viewable !== false;
+                          const evt = organizedAllDaySegments.find(
+                            currentSegment =>
+                              currentSegment.event.id === eventId
+                          )?.event;
+
+                          if ((isMobile || isTouch) && evt && isViewable) {
+                            setDraftEvent(evt);
+                            setIsDrawerOpen(true);
+                            return;
+                          }
+
                           setSelectedEventId(eventId);
                         }}
                         onEventLongPress={(eventId: string) => {

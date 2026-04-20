@@ -1,0 +1,578 @@
+@layer components {
+  /* ===================================================================
+   * Calendar event root contract
+   * =================================================================== */
+
+  .df-event,
+  .df-month-segment-event {
+    min-width: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto;
+    color: inherit;
+  }
+
+  .df-event {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .df-event[data-view='month'][data-multi-day='true'] {
+    position: static;
+    overflow: visible;
+  }
+
+  .df-event[data-touch-handles='true'] {
+    overflow: visible;
+  }
+
+  .df-event[data-view='day'],
+  .df-event[data-view='week'] {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  }
+
+  .df-event[data-view='day'][data-all-day='false'],
+  .df-event[data-view='week'][data-all-day='false'] {
+    border-radius: 0.25rem;
+  }
+
+  .df-event[data-dragging='true'],
+  .df-month-segment-event[data-dragging='true'] {
+    border-radius: 0.25rem;
+  }
+
+  .df-event[data-view='year'] {
+    display: flex;
+    overflow: hidden;
+    padding-inline: 0.25rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 150ms,
+      color 150ms;
+  }
+
+  .df-event[data-view='year'] > .df-content-slot {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .df-event[data-view='month'][data-all-day='false'] {
+    border-radius: 0.25rem;
+  }
+
+  .df-event[data-view='month'][data-month-stack='true'] {
+    margin-bottom: 2px;
+  }
+
+  .df-event[data-view='month'][data-month-stack='true']:last-child {
+    margin-bottom: 0;
+  }
+
+  .df-event[data-all-day='true']:not([data-view='year']) {
+    margin-block: 0.125rem;
+  }
+
+  .df-event[data-all-day='true']:not(
+      [data-view='year']
+    )[data-segment-shape='full'] {
+    border-radius: 0.75rem;
+  }
+
+  .df-event[data-all-day='true']:not(
+      [data-view='year']
+    )[data-segment-shape='start'] {
+    border-radius: 0.75rem 0 0 0.75rem;
+  }
+
+  .df-event[data-all-day='true']:not(
+      [data-view='year']
+    )[data-segment-shape='end'] {
+    border-radius: 0 0.75rem 0.75rem 0;
+  }
+
+  .df-event[data-all-day='true']:not(
+      [data-view='year']
+    )[data-segment-shape='middle'] {
+    border-radius: 0;
+  }
+
+  .df-event[data-view='year'][data-segment-shape='full'],
+  .df-month-segment-event[data-segment-shape='full'] {
+    border-radius: 0.25rem;
+  }
+
+  .df-event[data-view='year'][data-segment-shape='start'],
+  .df-month-segment-event[data-segment-shape='start'] {
+    border-radius: 0.25rem 0 0 0.25rem;
+  }
+
+  .df-event[data-view='year'][data-segment-shape='end'],
+  .df-month-segment-event[data-segment-shape='end'] {
+    border-radius: 0 0.25rem 0.25rem 0;
+  }
+
+  .df-event[data-view='year'][data-segment-shape='middle'],
+  .df-month-segment-event[data-segment-shape='middle'] {
+    border-radius: 0;
+  }
+
+  /* ===================================================================
+   * Shared event internals
+   * =================================================================== */
+
+  .df-event-all-day-shell {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding-inline: 0.25rem 0.25rem;
+    padding-left: 0.75rem;
+  }
+
+  .df-event-all-day-shell .df-event-icon-slot {
+    margin-right: 0.5rem;
+  }
+
+  .df-event-content-row {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .df-event-timed-content {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0.25rem;
+    padding-left: 0.75rem;
+  }
+
+  .df-event-timed-content[data-density='compact'] {
+    padding-block: 0;
+  }
+
+  .df-event-icon-slot {
+    margin-right: 0.375rem;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .df-event-icon-svg {
+    display: block;
+    height: 0.75rem;
+    width: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .df-event-title {
+    overflow: hidden;
+    padding-right: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .df-event-title-tight {
+    line-height: 1.2;
+  }
+
+  .df-event-time {
+    overflow: hidden;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .df-event-color-bar {
+    position: absolute;
+    top: 0.25rem;
+    bottom: 0.25rem;
+    left: 0.25rem;
+    width: 3px;
+    border-radius: 9999px;
+  }
+
+  .df-event-color-bar-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .df-event-resize-handle {
+    position: absolute;
+    z-index: 20;
+    transition: opacity 150ms;
+  }
+
+  .df-event-resize-handle-top,
+  .df-event-resize-handle-bottom {
+    left: 0;
+    width: 100%;
+    height: 0.375rem;
+    z-index: 10;
+    cursor: ns-resize;
+  }
+
+  .df-event-resize-handle-top {
+    top: 0;
+    border-radius: 0.25rem 0.25rem 0 0;
+  }
+
+  .df-event-resize-handle-bottom {
+    bottom: 0;
+    border-radius: 0 0 0.25rem 0.25rem;
+  }
+
+  .df-event-resize-handle-left,
+  .df-event-resize-handle-right {
+    top: 0;
+    bottom: 0;
+    width: 0.25rem;
+    cursor: ew-resize;
+    opacity: 0;
+  }
+
+  .df-event-resize-handle-left {
+    left: 0;
+  }
+
+  .df-event-resize-handle-right {
+    right: 0;
+  }
+
+  .df-event:hover .df-event-resize-handle-left,
+  .df-event:hover .df-event-resize-handle-right,
+  .df-event[data-selected='true'] .df-event-resize-handle-left,
+  .df-event[data-selected='true'] .df-event-resize-handle-right,
+  .df-month-segment-event:hover .df-event-resize-handle-left,
+  .df-month-segment-event:hover .df-event-resize-handle-right,
+  .df-month-segment-event[data-selected='true'] .df-event-resize-handle-left,
+  .df-month-segment-event[data-selected='true'] .df-event-resize-handle-right {
+    opacity: 1;
+  }
+
+  .df-event-touch-resize-indicator {
+    position: absolute;
+    z-index: 50;
+    box-sizing: border-box;
+    height: 0.625rem;
+    width: 0.625rem;
+    border-radius: 9999px;
+    border: 2px solid currentcolor;
+    background-color: #fff;
+    pointer-events: auto;
+  }
+
+  .df-event-touch-resize-indicator[data-axis='vertical'][data-position='top'] {
+    top: -0.375rem;
+    right: 1.25rem;
+  }
+
+  .df-event-touch-resize-indicator[data-axis='vertical'][data-position='bottom'] {
+    bottom: -0.375rem;
+    left: 1.25rem;
+  }
+
+  .df-event-touch-resize-indicator[data-axis='horizontal'] {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .df-event-touch-resize-indicator[data-axis='horizontal'][data-position='left'] {
+    left: 1.25rem;
+  }
+
+  .df-event-touch-resize-indicator[data-axis='horizontal'][data-position='right'] {
+    right: 1.25rem;
+  }
+
+  /* ===================================================================
+   * Month event variants
+   * =================================================================== */
+
+  .df-event-month-all-day,
+  .df-event-month-regular {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    cursor: pointer;
+  }
+
+  .df-event-month-all-day {
+    padding-inline: 0.25rem;
+    overflow: hidden;
+    border-radius: 0.25rem;
+  }
+
+  .df-event-month-regular {
+    height: 1rem;
+    justify-content: space-between;
+    padding-inline: 0.125rem;
+  }
+
+  .df-event-month-main {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+  }
+
+  .df-event-month-color-bar,
+  .df-event-year-indicator {
+    display: inline-block;
+    height: 0.75rem;
+    width: 0.1875rem;
+    flex-shrink: 0;
+    border-radius: 9999px;
+  }
+
+  .df-event-month-color-bar {
+    margin-right: 0.25rem;
+  }
+
+  .df-event-month-title {
+    display: block;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .df-event-month-title.df-mobile-mask-fade {
+    text-overflow: clip;
+  }
+
+  .df-event-month-all-day .df-event-icon-slot,
+  .df-event-month-all-day .df-event-icon-svg {
+    margin-right: 0.25rem;
+  }
+
+  .df-event-month-time {
+    margin-left: 0.25rem;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .df-event-holiday-icon {
+    display: inline-block;
+    margin-right: 0.25rem;
+    flex-shrink: 0;
+    color: rgb(202 138 4);
+  }
+
+  .df-event[data-selected='true'] .df-event-month-title,
+  .df-event[data-selected='true'] .df-event-month-time,
+  .df-event[data-selected='true'] .df-event-month-all-day .df-event-icon-svg,
+  .df-month-segment-event[data-selected='true'] .df-event-month-title,
+  .df-month-segment-event[data-selected='true'] .df-event-month-time {
+    color: #fff;
+  }
+
+  .df-event[data-selected='true'] .df-event-holiday-icon {
+    color: rgb(254 240 138);
+  }
+
+  /* ===================================================================
+   * Year event variants
+   * =================================================================== */
+
+  .df-event-year-content {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    overflow: hidden;
+    pointer-events: auto;
+  }
+
+  .df-event-year-content-timed {
+    gap: 0.25rem;
+  }
+
+  .df-event-year-icon-badge {
+    display: inline-flex;
+    height: 12px;
+    width: 12px;
+    box-sizing: border-box;
+    padding: 0.125rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    color: #fff;
+  }
+
+  .df-event-year-icon-badge .df-event-icon-svg {
+    margin-right: 0;
+    height: 0.5rem;
+    width: 0.5rem;
+  }
+
+  .df-event-year-main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .df-event-year-title {
+    display: block;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 16px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .df-event-year-title-fade {
+    text-overflow: clip;
+    mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+  }
+
+  .df-event-year-title-strong {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .df-event-year-title-strong.df-event-year-title-fade {
+    text-overflow: clip;
+    mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+  }
+
+  .df-event-year-tail {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: rgb(255 255 255 / 0.8);
+  }
+
+  .dark .df-event-year-tail {
+    color: rgb(255 255 255 / 0.9);
+  }
+
+  .df-event-year-tail-dot {
+    height: 0.375rem;
+    width: 0.375rem;
+    border-radius: 9999px;
+    background-color: rgb(255 255 255 / 0.6);
+  }
+
+  .dark .df-event-year-tail-dot {
+    background-color: rgb(255 255 255 / 0.8);
+  }
+
+  /* ===================================================================
+   * Month multi-day segment shell
+   * =================================================================== */
+
+  .df-month-segment-event {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    padding-inline: 0.25rem;
+    font-size: 0.75rem;
+    transition:
+      box-shadow 200ms,
+      transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .df-month-segment-event:hover {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  }
+
+  .dark .df-month-segment-event:hover {
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.3),
+      0 4px 6px -4px rgb(0 0 0 / 0.3);
+  }
+
+  .df-month-segment-event-body {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .df-month-segment-event-all-day {
+    display: flex;
+    min-width: 0;
+    width: 100%;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .df-month-segment-event-all-day-main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .df-month-segment-event-all-day-title {
+    display: block;
+    overflow: hidden;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .df-month-segment-event-time {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    white-space: nowrap;
+  }
+
+  .df-month-segment-event-time-spaced {
+    margin-left: 0.5rem;
+  }
+
+  .df-month-segment-event-time-overlay {
+    position: absolute;
+  }
+
+  .df-month-segment-event-tail-time {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    white-space: nowrap;
+  }
+
+  .df-month-segment-event-tail {
+    margin-left: 0.25rem;
+    flex-shrink: 0;
+    color: rgb(255 255 255 / 0.8);
+  }
+
+  .dark .df-month-segment-event-tail {
+    color: rgb(255 255 255 / 0.9);
+  }
+
+  .df-month-segment-event-tail-dot {
+    height: 0.375rem;
+    width: 0.375rem;
+    border-radius: 9999px;
+    background-color: rgb(255 255 255 / 0.6);
+  }
+
+  .dark .df-month-segment-event-tail-dot {
+    background-color: rgb(255 255 255 / 0.8);
+  }
+}

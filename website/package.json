@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "format": "prettier --write \"**/*.{ts,tsx,mdx,css}\"",
     "lint": "oxlint .",
     "postinstall": "fumadocs-mdx",
     "start": "next start",
@@ -49,6 +50,8 @@
     "eslint": "^10.0.0",
     "eslint-config-next": "16.1.6",
     "postcss": "^8.5.6",
+    "prettier": "^3.5.0",
+    "prettier-plugin-embed": "^0.5.1",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   }

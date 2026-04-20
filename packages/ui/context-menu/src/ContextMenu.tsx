@@ -2,10 +2,7 @@ import { cloneElement, isValidElement, ComponentChildren } from 'preact';
 import { createPortal, forwardRef } from 'preact/compat';
 import { useEffect, useRef, useState } from 'preact/hooks';
 
-// ---------------------------------------------------------------------------
 // Inline icon
-// ---------------------------------------------------------------------------
-
 interface IconProps {
   className?: string;
   width?: number;
@@ -29,10 +26,7 @@ const ChevronRight = ({ className, width = 24, height = 24 }: IconProps) => (
   </svg>
 );
 
-// ---------------------------------------------------------------------------
 // ContextMenu
-// ---------------------------------------------------------------------------
-
 interface ContextMenuProps {
   x: number;
   y: number;
@@ -104,10 +98,11 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
     return createPortal(
       <div
         ref={setRefs}
-        className={`df-portal df-animate-in df-fade-in df-zoom-in-95 fixed z-50 min-w-32 overflow-visible rounded-md border border-slate-200 bg-white p-1 text-slate-950 shadow-md duration-100 ease-out dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50 ${className || ''}`}
+        className={`df-portal df-context-menu df-context-menu-content${className ? ` ${className}` : ''}`}
         style={style}
         onContextMenu={e => e.preventDefault()}
         data-context-menu-root='true'
+        role='menu'
       >
         {children}
       </div>,
@@ -118,10 +113,7 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
 
 ContextMenu.displayName = 'ContextMenu';
 
-// ---------------------------------------------------------------------------
 // ContextMenuItem
-// ---------------------------------------------------------------------------
-
 export const ContextMenuItem = ({
   onClick,
   children,
@@ -136,52 +128,34 @@ export const ContextMenuItem = ({
   disabled?: boolean;
 }) => (
   <div
-    className={`group relative flex cursor-default items-center rounded-sm px-3 py-0.5 text-[12px] transition-colors outline-none select-none ${
-      disabled
-        ? 'pointer-events-none opacity-50'
-        : 'hover:bg-[var(--df-color-primary)] hover:text-[var(--df-color-primary-foreground)] focus:bg-[var(--df-color-primary)] focus:text-[var(--df-color-primary-foreground)]'
-    } ${
-      danger
-        ? 'df-text-destructive df-hover-fill-destructive df-focus-fill-destructive'
-        : 'text-[var(--df-color-foreground)]'
-    }`}
+    className='df-context-menu-item'
     onClick={e => {
       e.stopPropagation();
       if (!disabled) onClick();
     }}
     data-disabled={disabled}
+    data-danger={danger}
+    role='menuitem'
+    tabIndex={disabled ? -1 : 0}
   >
-    {icon && <span className='mr-2 h-4 w-4'>{icon}</span>}
+    {icon && <span className='df-context-menu-item-icon'>{icon}</span>}
     {children}
   </div>
 );
 
-// ---------------------------------------------------------------------------
 // ContextMenuSeparator
-// ---------------------------------------------------------------------------
-
 export const ContextMenuSeparator = () => (
-  <div className='-mx-1 my-1 h-px bg-slate-200 dark:bg-slate-800' />
+  <div className='df-context-menu-separator' role='separator' />
 );
 
-// ---------------------------------------------------------------------------
 // ContextMenuLabel
-// ---------------------------------------------------------------------------
-
 export const ContextMenuLabel = ({
   children,
 }: {
   children: ComponentChildren;
-}) => (
-  <div className='px-3 py-0.5 text-[12px] font-semibold text-slate-950 dark:text-slate-50'>
-    {children}
-  </div>
-);
+}) => <div className='df-context-menu-label'>{children}</div>;
 
-// ---------------------------------------------------------------------------
 // ContextMenuSub
-// ---------------------------------------------------------------------------
-
 export const ContextMenuSub = ({
   children,
 }: {
@@ -211,7 +185,7 @@ export const ContextMenuSub = ({
 
   return (
     <div
-      className='relative'
+      className='df-context-menu-sub'
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -223,9 +197,7 @@ export const ContextMenuSub = ({
   );
 };
 
-// ---------------------------------------------------------------------------
 // ContextMenuSubTrigger
-// ---------------------------------------------------------------------------
 
 export const ContextMenuSubTrigger = ({
   children,
@@ -237,19 +209,18 @@ export const ContextMenuSubTrigger = ({
   isOpen?: boolean;
 }) => (
   <div
-    className={`relative flex cursor-default items-center rounded-sm px-3 py-0.5 text-[12px] text-[var(--df-color-foreground)] transition-colors outline-none select-none hover:bg-[var(--df-color-primary)] hover:text-[var(--df-color-primary-foreground)] focus:bg-[var(--df-color-primary)] focus:text-[var(--df-color-primary-foreground)] ${isOpen ? 'bg-[var(--df-color-primary)] text-[var(--df-color-primary-foreground)]' : ''}`}
+    className='df-context-menu-sub-trigger'
+    data-open={isOpen}
+    role='menuitem'
+    tabIndex={0}
   >
-    {icon && <span className='mr-2 h-4 w-4'>{icon}</span>}
-    <span className='grow text-left'>{children}</span>
-    <ChevronRight
-      className={`ml-auto h-4 w-4 ${isOpen ? 'text-white opacity-100' : 'opacity-60'}`}
-    />
+    {icon && <span className='df-context-menu-sub-icon'>{icon}</span>}
+    <span className='df-context-menu-sub-label'>{children}</span>
+    <ChevronRight className='df-context-menu-sub-chevron' />
   </div>
 );
 
-// ---------------------------------------------------------------------------
 // ContextMenuSubContent
-// ---------------------------------------------------------------------------
 
 export const ContextMenuSubContent = ({
   children,
@@ -278,23 +249,17 @@ export const ContextMenuSubContent = ({
   return (
     <div
       ref={ref}
-      className='df-portal df-animate-in df-fade-in df-zoom-in-95 absolute top-0 z-50 min-w-32 overflow-hidden rounded-md border border-slate-200 bg-white p-1 whitespace-nowrap text-slate-950 shadow-md duration-100 ease-out dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50'
-      style={{
-        left: position === 'right' ? '100%' : 'auto',
-        right: position === 'left' ? '100%' : 'auto',
-        marginLeft: position === 'right' ? '0.25rem' : 0,
-        marginRight: position === 'left' ? '0.25rem' : 0,
-      }}
+      className='df-portal df-context-menu df-context-menu-sub-content'
+      data-position={position}
       data-submenu-content='true'
+      role='menu'
     >
       {children}
     </div>
   );
 };
 
-// ---------------------------------------------------------------------------
 // ContextMenuColorPicker
-// ---------------------------------------------------------------------------
 
 const COLORS = [
   '#ea426b',
@@ -317,17 +282,18 @@ export const ContextMenuColorPicker = ({
   onCustomColor?: () => void;
   customColorLabel?: string;
 }) => (
-  <div>
-    <div className='grid grid-cols-7 gap-2 p-1 px-3'>
+  <div className='df-context-menu-color-picker'>
+    <div className='df-context-menu-color-grid'>
       {COLORS.map(color => (
         <button
           key={color}
           type='button'
-          className={`df-focus-ring-only h-5 w-5 rounded-full border border-gray-200 transition-transform hover:scale-110 focus:ring-2 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:focus:ring-offset-slate-800 ${
+          className='df-context-menu-color-swatch'
+          data-selected={
             selectedColor?.toLowerCase() === color.toLowerCase()
-              ? 'df-ring-primary-solid ring-2 ring-offset-1 dark:ring-offset-slate-800'
-              : ''
-          }`}
+              ? 'true'
+              : undefined
+          }
           style={{ backgroundColor: color }}
           onClick={e => {
             e.stopPropagation();
@@ -338,15 +304,16 @@ export const ContextMenuColorPicker = ({
       ))}
     </div>
     {onCustomColor && (
-      <div
-        className='mt-1 flex cursor-pointer items-center rounded-sm px-3 py-0.5 text-[12px] text-[var(--df-color-foreground)] transition-colors hover:bg-[var(--df-color-primary)] hover:text-[var(--df-color-primary-foreground)]'
+      <button
+        type='button'
+        className='df-context-menu-custom-color'
         onClick={e => {
           e.stopPropagation();
           onCustomColor();
         }}
       >
         {customColorLabel}
-      </div>
+      </button>
     )}
   </div>
 );

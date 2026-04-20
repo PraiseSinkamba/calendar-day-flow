@@ -25,7 +25,7 @@ interface UseDetailPanelPositionProps {
   selectedEventElementRef: RefObject<HTMLElement>;
   isMobile: boolean;
   eventVisibility:
-    | 'visible'
+    | 'standard'
     | 'sticky-top'
     | 'sticky-bottom'
     | 'sticky-left'
@@ -74,7 +74,7 @@ export const useDetailPanelPosition = ({
 
   const updatePanelPosition = useCallback(() => {
     if (
-      !selectedEventElementRef.current ||
+      (!selectedEventElementRef.current && !eventRef.current) ||
       !calendarRef.current ||
       !detailPanelRef.current
     )
@@ -105,7 +105,7 @@ export const useDetailPanelPosition = ({
 
     requestAnimationFrame(() => {
       if (!detailPanelRef.current) return;
-      const eventElement = selectedEventElementRef.current;
+      const eventElement = selectedEventElementRef.current || eventRef.current;
       if (!eventElement) return;
 
       const panelRect = detailPanelRef.current.getBoundingClientRect();
@@ -126,7 +126,7 @@ export const useDetailPanelPosition = ({
 
         eventRect = actualEventRect;
       } else {
-        eventRect = selectedEventElementRef!.current!.getBoundingClientRect();
+        eventRect = eventElement.getBoundingClientRect();
       }
 
       if (isMonthView && isMultiDay && segment) {

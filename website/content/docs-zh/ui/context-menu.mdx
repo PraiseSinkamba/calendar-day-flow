@@ -10,6 +10,15 @@ title: 右键菜单
 
 <PackageTabs pkg='@dayflow/ui-context-menu' />
 
+如果你的项目已经使用 Tailwind CSS，请导入仅包含组件样式的入口：
+
+```css
+@import '@dayflow/ui-context-menu/dist/styles.components.css';
+@import 'tailwindcss';
+```
+
+如果你的项目不使用 Tailwind CSS，则继续导入完整样式：
+
 ```tsx
 import {
   ContextMenu,

@@ -79,10 +79,6 @@ export interface CalendarCallbacks {
   onEventDelete?: (eventId: string) => void | Promise<void>;
   onDateChange?: (date: Date) => void | Promise<void>;
   onRender?: () => void | Promise<void>;
-  /**
-   * @deprecated This method is retained for backward compatibility and will be removed in future releases. Use ``onVisibleRangeChange`` instead.
-   */
-  onVisibleMonthChange?: (date: Date) => void | Promise<void>;
   onVisibleRangeChange?: (
     start: Date,
     end: Date,
@@ -102,6 +98,11 @@ export interface CalendarCallbacks {
   ) => boolean | undefined | Promise<boolean | undefined>;
   onMoreEventsClick?: (date: Date) => void | Promise<void>;
   onDismissUI?: () => void | Promise<void>;
+  /**
+   * Toggle event detail panel or dialog.
+   * If eventId is null, closes the detail UI.
+   */
+  onEventDetailToggle?: (eventId: string | null) => void;
 }
 
 export interface CalendarHeaderProps {
@@ -266,6 +267,7 @@ export interface ICalendarApp {
     e: MouseEvent
   ) => boolean | undefined | Promise<boolean | undefined>;
   onMoreEventsClick: (date: Date) => void;
+  onEventDetailToggle: (eventId: string | null) => void;
   highlightEvent: (eventId: string | null) => void;
   selectEvent: (eventId: string | null) => void;
   getCalendars: () => CalendarType[];

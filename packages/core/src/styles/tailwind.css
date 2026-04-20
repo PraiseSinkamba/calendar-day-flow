@@ -1,14 +1,7 @@
 @import 'tailwindcss/preflight' layer(base);
 @import 'tailwindcss/theme' layer(theme);
 @import 'tailwindcss/utilities';
-@import '@dayflow/blossom-color-picker/styles.css';
-@import './shared-foundation.css';
-
-/* Force scanning of all relevant source code files to extract utility classes */
-@source "../**/*.{ts,tsx}";
-@source "../../../core/*/src/**/*.{ts,tsx}";
-@source "../../../plugins/*/src/**/*.{ts,tsx}";
-@source "../../../ui/*/src/**/*.{ts,tsx}";
+@import './library-imports.css';
 
 @variant dark (.dark &);
 

@@ -4,7 +4,7 @@ import { Temporal } from 'temporal-polyfill';
 import RegularEventContent from '@/components/calendarEvent/components/RegularEventContent';
 
 describe('RegularEventContent', () => {
-  it('keeps normal padding for multi-day timed segments', () => {
+  it('keeps default density for multi-day timed segments', () => {
     const event = {
       id: 'event-1',
       title: 'Cross-day Event',
@@ -34,9 +34,11 @@ describe('RegularEventContent', () => {
       />
     );
 
-    const content = container.querySelector('.pl-3');
+    const content = container.querySelector(
+      '.df-event-timed-content'
+    ) as HTMLElement | null;
 
-    expect(content?.className).toContain('p-1');
-    expect(content?.className).not.toContain('py-0');
+    expect(content).not.toBeNull();
+    expect(content!.dataset.density).toBe('default');
   });
 });

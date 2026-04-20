@@ -1,60 +1,191 @@
 /* ── DayFlow UI – Range Picker ──────────────────────────────────────────── */
 
-/* CSS custom properties (same defaults as @dayflow/core shared-foundation) */
-@layer df-theme {
-  :where(:root) {
-    --df-color-foreground: rgb(46 46 46);
-    --df-color-primary: rgb(46 46 46);
-    --df-color-primary-foreground: rgb(255 255 255);
+@layer components {
+  .df-range-picker {
+    --df-range-picker-background: rgb(255 255 255);
+    --df-range-picker-border: rgb(226 232 240);
+    --df-range-picker-foreground: rgb(46 46 46);
+    --df-range-picker-muted: rgb(148 163 184);
+    --df-range-picker-primary: rgb(46 46 46);
+    --df-range-picker-primary-foreground: rgb(255 255 255);
+    --df-range-picker-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.08);
+    --df-range-picker-shadow-lg: 0 6px 18px rgb(15 23 42 / 0.12);
+    --df-range-picker-button-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+    --df-color-background: var(--df-range-picker-background);
+    --df-color-border: var(--df-range-picker-border);
+    --df-color-foreground: var(--df-range-picker-foreground);
+    --df-color-muted-foreground: var(--df-range-picker-muted);
+    --df-color-primary: var(--df-range-picker-primary);
+    --df-color-primary-foreground: var(--df-range-picker-primary-foreground);
+    --color-background: var(--df-color-background);
+    --color-border: var(--df-color-border);
+    --color-foreground: var(--df-color-foreground);
+    --color-primary: var(--df-color-primary);
+    --color-primary-foreground: var(--df-color-primary-foreground);
   }
 
-  :where(.dark) {
-    --df-color-foreground: rgb(229 229 229);
-    --df-color-primary: rgb(229 229 229);
-    --df-color-primary-foreground: rgb(15 23 42);
+  .dark .df-range-picker {
+    --df-range-picker-background: rgb(31 41 55);
+    --df-range-picker-border: rgb(75 85 99);
+    --df-range-picker-foreground: rgb(229 229 229);
+    --df-range-picker-muted: rgb(107 114 128);
+    --df-range-picker-primary: rgb(229 229 229);
+    --df-range-picker-primary-foreground: rgb(15 23 42);
   }
 
   @media (prefers-color-scheme: dark) {
-    :root:not(.light):not(.dark) {
-      --df-color-foreground: rgb(229 229 229);
-      --df-color-primary: rgb(229 229 229);
-      --df-color-primary-foreground: rgb(23 23 23);
+    :root:not(.light):not(.dark) .df-range-picker {
+      --df-range-picker-background: rgb(31 41 55);
+      --df-range-picker-border: rgb(75 85 99);
+      --df-range-picker-foreground: rgb(229 229 229);
+      --df-range-picker-muted: rgb(107 114 128);
+      --df-range-picker-primary: rgb(229 229 229);
+      --df-range-picker-primary-foreground: rgb(23 23 23);
     }
   }
-}
 
-@layer components {
-  /* Bridge df-color-* → local color-* so Tailwind @apply and inline styles work */
-  .df-range-picker {
-    --color-primary: var(--df-color-primary);
-    --color-primary-foreground: var(--df-color-primary-foreground);
-    --color-foreground: var(--df-color-foreground);
+  .df-range-picker-root {
+    position: relative;
+    width: 100%;
+    min-width: 0;
   }
 
-  .df-fill-primary {
+  .df-range-picker-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.5rem;
+    background-color: var(--df-color-background);
+    color: var(--df-color-foreground);
+    box-shadow: var(--df-range-picker-shadow-sm);
+    transition:
+      border-color 120ms ease,
+      box-shadow 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .df-range-picker-trigger[data-open='true'] {
+    border-color: var(--df-color-primary);
+    box-shadow: var(--df-range-picker-shadow-lg);
+  }
+
+  .df-range-picker-trigger[data-disabled='true'] {
+    cursor: not-allowed;
+    color: var(--df-color-muted-foreground);
+  }
+
+  .df-range-picker-field-group {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .df-range-picker-input {
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    background: transparent;
+    padding: 0.375rem 0.5rem;
+    color: var(--df-color-foreground);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    transition:
+      color 120ms ease,
+      background-color 120ms ease,
+      box-shadow 120ms ease;
+    outline: none;
+  }
+
+  .df-range-picker-input[data-focused='true'] {
+    background-color: var(--df-color-background);
+    color: var(--df-color-primary);
+  }
+
+  .df-range-picker-input[data-disabled='true'] {
+    cursor: not-allowed;
+    color: var(--df-color-muted-foreground);
+  }
+
+  .df-range-picker-input:focus-visible {
+    box-shadow:
+      0 0 0 0px var(--df-color-background),
+      0 0 0 2px var(--df-color-primary);
+  }
+
+  .df-range-picker-separator-icon {
+    flex-shrink: 0;
+    color: var(--df-color-muted-foreground);
+  }
+
+  .df-range-picker-popup {
+    z-index: 9999;
+  }
+
+  .df-range-picker-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.75rem;
+    background-color: var(--df-color-background);
+    padding: 0.75rem;
+  }
+
+  .df-range-picker-panel-body {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .df-range-picker-calendar-pane {
+    min-width: 0;
+    flex: 3 1 0;
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.75rem;
+    background-color: var(--df-color-background);
+    box-shadow: var(--df-range-picker-shadow-sm);
+  }
+
+  .df-range-picker-time-pane {
+    display: flex;
+    flex: 1 1 0;
+    justify-content: flex-end;
+  }
+
+  @media (min-width: 640px) {
+    .df-range-picker-time-pane {
+      width: 8rem;
+    }
+  }
+
+  .df-range-picker-footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .df-range-picker-confirm-button {
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    border-radius: 9999px;
     background-color: var(--df-color-primary);
+    padding: 0.375rem 1rem;
     color: var(--df-color-primary-foreground);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    box-shadow: var(--df-range-picker-button-shadow);
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease,
+      background-color 120ms ease;
   }
 
-  .df-tint-primary {
-    background-color: color-mix(
-      in srgb,
-      var(--df-color-primary) 10%,
-      transparent
-    );
-    color: var(--df-color-primary);
-  }
-
-  .df-hover-primary:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--df-color-primary) 10%,
-      transparent
-    );
-    color: var(--df-color-primary);
-  }
-
-  .df-hover-primary-solid:hover {
+  .df-range-picker-confirm-button:hover:not(:disabled) {
     background-color: color-mix(
       in srgb,
       var(--df-color-primary) 90%,
@@ -62,16 +193,216 @@
     );
   }
 
-  .df-text-primary {
+  .df-range-picker-confirm-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .df-range-picker-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--df-color-border) 80%, transparent);
+    padding: 0.5rem 0.75rem;
+    color: var(--df-color-foreground);
+  }
+
+  .df-range-picker-calendar-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .df-range-picker-calendar-nav-button {
+    border: 0;
+    border-radius: 0.375rem;
+    background: transparent;
+    padding: 0.25rem 0.5rem;
+    color: var(--df-color-muted-foreground);
+    transition:
+      color 120ms ease,
+      background-color 120ms ease,
+      opacity 120ms ease;
+  }
+
+  .df-range-picker-calendar-nav-button:hover:not(:disabled) {
+    color: var(--df-color-foreground);
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-primary) 10%,
+      transparent
+    );
+  }
+
+  .df-range-picker-calendar-nav-button:disabled {
+    opacity: 0.4;
+  }
+
+  .df-range-picker-calendar-title {
+    color: var(--df-color-foreground);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+  }
+
+  .df-range-picker-weekday-row,
+  .df-range-picker-day-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding-inline: 0.25rem;
+  }
+
+  .df-range-picker-weekday-row {
+    padding-top: 0.5rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .df-range-picker-weekday-label {
+    text-align: center;
+    color: var(--df-color-muted-foreground);
+    font-size: 12px;
+    line-height: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .df-range-picker-day-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: var(--df-color-foreground);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      opacity 120ms ease;
+  }
+
+  .df-range-picker-day-cell:hover:not(:disabled):not([data-range-edge]) {
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-primary) 10%,
+      transparent
+    );
     color: var(--df-color-primary);
   }
 
-  .df-border-primary {
-    border-color: var(--df-color-primary);
+  .df-range-picker-day-cell[data-outside='true'] {
+    color: color-mix(
+      in srgb,
+      var(--df-color-muted-foreground) 75%,
+      transparent
+    );
+  }
+
+  .df-range-picker-day-cell[data-in-range='true'] {
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-primary) 10%,
+      transparent
+    );
+    color: var(--df-color-primary);
+  }
+
+  .df-range-picker-day-cell[data-range-edge='start'],
+  .df-range-picker-day-cell[data-range-edge='end'] {
+    background-color: var(--df-color-primary);
+    color: var(--df-color-primary-foreground);
+    font-weight: 600;
+  }
+
+  .df-range-picker-time-selector {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--df-color-border);
+    border-radius: 0.75rem;
+    background-color: var(--df-color-background);
+    box-shadow: var(--df-range-picker-shadow-sm);
+  }
+
+  @media (min-width: 640px) {
+    .df-range-picker-time-selector {
+      width: 7rem;
+    }
+  }
+
+  .df-range-picker-time-selector-header {
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--df-color-border) 80%, transparent);
+  }
+
+  .df-range-picker-time-selector-value {
+    padding-block: 0.375rem;
+    color: var(--df-color-foreground);
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .df-range-picker-time-selector-body {
+    display: flex;
+    padding: 0.25rem;
+  }
+
+  .df-range-picker-time-selector-column {
+    width: 3.5rem;
+  }
+
+  .df-range-picker-time-list {
+    height: 18rem;
+    overflow-y: auto;
+    border: 1px solid
+      color-mix(in srgb, var(--df-color-border) 80%, transparent);
+    border-radius: 0.375rem;
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-background) 92%,
+      white 8%
+    );
+  }
+
+  .df-range-picker-time-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 2rem;
+    border: 0;
+    background: transparent;
+    color: var(--df-color-foreground);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      opacity 120ms ease;
+  }
+
+  .df-range-picker-time-option:hover:not(:disabled):not([data-active='true']) {
+    background-color: color-mix(
+      in srgb,
+      var(--df-color-primary) 10%,
+      transparent
+    );
+    color: var(--df-color-primary);
+  }
+
+  .df-range-picker-time-option[data-active='true'] {
+    background-color: var(--df-color-primary);
+    color: var(--df-color-primary-foreground);
+    font-weight: 600;
   }
 }
 
-/* Hide scrollbar utility */
 .df-scrollbar-hide::-webkit-scrollbar {
   display: none;
 }

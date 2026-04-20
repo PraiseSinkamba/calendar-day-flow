@@ -150,6 +150,11 @@ describe('CSS dist output integrity', () => {
 
       expect(violations).toEqual([]);
     });
+
+    it('does not ship unresolved @source directives', () => {
+      expect(componentsCss).not.toMatch(/@source\s+/);
+      expect(fullCss).not.toMatch(/@source\s+/);
+    });
   });
 
   // ── Guard #2: All color token mappings present in the scoped root block ──
@@ -308,6 +313,12 @@ describe('CSS dist output integrity', () => {
     it('keeps df-portal scope in both dist files', () => {
       expect(fullCss).toMatch(/\.df-portal/);
       expect(componentsCss).toMatch(/\.df-portal/);
+    });
+  });
+
+  describe('styles.css — host reset compatibility', () => {
+    it('does not ship cascade layers that can lose to host unlayered resets', () => {
+      expect(fullCss).not.toMatch(/@layer\s+/);
     });
   });
 });

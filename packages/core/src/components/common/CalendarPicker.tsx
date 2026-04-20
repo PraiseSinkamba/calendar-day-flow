@@ -41,7 +41,6 @@ export const CalendarPicker = ({
   const pickerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Update dropdown position
   const updatePosition = () => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
@@ -64,7 +63,6 @@ export const CalendarPicker = ({
     }
   };
 
-  // Close dropdown when clicking outside or scrolling
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -90,14 +88,12 @@ export const CalendarPicker = ({
     };
   }, [isOpen]);
 
-  // Get the actual color value for a calendar ID
   const getColorForCalendarId = (calendarId: string): string => {
     const reg = registry || getDefaultCalendarRegistry();
     const colors = reg.resolveColors(calendarId);
-    return colors.lineColor; // Use lineColor as the display color
+    return colors.lineColor;
   };
 
-  // Handle color selection
   const handleSelect = (
     e: JSX.TargetedMouseEvent<HTMLElement>,
     optionValue: string
@@ -122,21 +118,20 @@ export const CalendarPicker = ({
           {options.map(opt => (
             <div
               key={opt.value}
-              className={`flex cursor-pointer items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${opt.value === value ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
+              className='df-calendar-picker-option df-calendar-picker-option-mobile'
+              data-selected={opt.value === value ? 'true' : 'false'}
               onClick={e => handleSelect(e, opt.value)}
             >
-              <div className='mr-3 flex min-w-0 flex-1 items-center'>
-                <div className='mr-2 flex w-5 justify-center'>
-                  {opt.value === value && (
-                    <Check className='df-text-primary h-4 w-4' />
-                  )}
+              <div className='df-calendar-picker-option-inner'>
+                <div className='df-calendar-picker-check-area'>
+                  {opt.value === value && <Check className='df-text-primary' />}
                 </div>
-                <span className='truncate text-sm text-gray-700 dark:text-gray-200'>
+                <span className='df-calendar-picker-option-label'>
                   {opt.label}
                 </span>
               </div>
               <span
-                className='h-3 w-3 shrink-0 rounded-full'
+                className='df-calendar-picker-color-swatch df-calendar-picker-color-swatch-sm'
                 style={{ backgroundColor: getColorForCalendarId(opt.value) }}
               />
             </div>
@@ -150,30 +145,23 @@ export const CalendarPicker = ({
       <ul
         data-calendar-picker-dropdown='true'
         style={dropdownStyle}
-        className='df-portal df-animate-in df-fade-in df-zoom-in-95 origin-top-left overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-gray-600 dark:bg-gray-700 dark:shadow-gray-900/50'
+        className={calendarPickerDropdown}
       >
         {options.map(opt => (
           <li
             key={opt.value}
-            className={`flex cursor-pointer items-center px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-600 ${
-              value === opt.value ? 'font-semibold' : ''
-            }`}
+            className='df-calendar-picker-option'
+            data-selected={value === opt.value ? 'true' : 'false'}
             onClick={e => handleSelect(e, opt.value)}
           >
-            {value === opt.value ? (
-              <span className='df-text-primary mr-2 text-sm'>
-                <Check width={12} height={12} />
-              </span>
-            ) : (
-              <div className='mr-2 h-3 w-3 text-sm'>&nbsp;</div>
-            )}
+            <div className='df-calendar-picker-check-area'>
+              {opt.value === value && <Check className='df-text-primary' />}
+            </div>
             <span
-              className='mr-2 h-3 w-3 shrink-0 rounded-sm'
+              className='df-calendar-picker-color-swatch-sm'
               style={{ backgroundColor: getColorForCalendarId(opt.value) }}
             />
-            <span className='text-sm whitespace-nowrap text-gray-700 dark:text-gray-200'>
-              {opt.label}
-            </span>
+            <span className='df-calendar-picker-option-label'>{opt.label}</span>
           </li>
         ))}
       </ul>,
@@ -183,7 +171,7 @@ export const CalendarPicker = ({
 
   if (variant === 'mobile') {
     return (
-      <div className='relative inline-block' ref={pickerRef}>
+      <div className='df-calendar-picker' ref={pickerRef}>
         <button
           type='button'
           ref={triggerRef}
@@ -192,16 +180,16 @@ export const CalendarPicker = ({
             e.stopPropagation();
             if (!disabled) setIsOpen(!isOpen);
           }}
-          className={`flex items-center space-x-2 rounded-md bg-gray-100 px-3 py-1.5 transition-colors dark:bg-gray-700 ${disabled ? 'cursor-default opacity-50' : ''}`}
+          className='df-calendar-picker-trigger df-calendar-picker-trigger-mobile'
         >
           <span
-            className='h-3 w-3 rounded-full'
+            className='df-calendar-picker-color-swatch df-calendar-picker-color-swatch-sm'
             style={{ backgroundColor: getColorForCalendarId(value) }}
           />
-          <span className='text-sm font-medium text-gray-700 dark:text-gray-200'>
+          <span className='df-calendar-picker-label'>
             {currentOption?.label || value}
           </span>
-          <ChevronsUpDown className='h-4 w-4 text-gray-400' />
+          <ChevronsUpDown className='df-text-muted' />
         </button>
         {renderDropdown()}
       </div>
@@ -209,7 +197,7 @@ export const CalendarPicker = ({
   }
 
   return (
-    <div className='relative inline-block' ref={pickerRef}>
+    <div className='df-calendar-picker' ref={pickerRef}>
       <button
         ref={triggerRef}
         type='button'
@@ -217,13 +205,13 @@ export const CalendarPicker = ({
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className='flex h-8 items-center space-x-2 rounded-md bg-gray-100 px-2 py-1 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600'
+        className='df-calendar-picker-trigger'
       >
         <span
-          className='h-4 w-4 shrink-0 rounded-sm'
+          className='df-calendar-picker-color-swatch'
           style={{ backgroundColor: getColorForCalendarId(value) }}
         />
-        <ChevronsUpDown className='h-4 w-4 text-gray-600 dark:text-gray-300' />
+        <ChevronsUpDown className='df-text-muted' />
       </button>
       {renderDropdown()}
     </div>
