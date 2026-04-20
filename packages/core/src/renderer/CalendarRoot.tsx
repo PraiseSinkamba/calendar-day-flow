@@ -213,7 +213,8 @@ export const CalendarRoot = ({
     [sidebar.isCollapsed, sidebar.toggleCollapsed]
   );
 
-  const hasSafeAreaLeftValue = collapsedSafeAreaLeft !== undefined;
+  const hasSafeAreaLeftValue =
+    collapsedSafeAreaLeft !== undefined && collapsedSafeAreaLeft !== null;
   const miniSidebarWidth = hasSafeAreaLeftValue ? '0px' : sidebar.miniWidth;
 
   const safeAreaLeft =

@@ -14,9 +14,10 @@ NC='\033[0m'
 # ---------- Usage ----------
 usage() {
     echo -e "${BOLD}Usage:${NC}"
-    echo "  ./scripts/publish.sh all          Publish all packages (core, adapters, plugins, cli)"
+    echo "  ./scripts/publish.sh all          Publish all packages (core, adapters, plugins, ui, cli)"
     echo "  ./scripts/publish.sh main         Publish core + react + vue + svelte"
     echo "  ./scripts/publish.sh plugins      Publish all plugins"
+    echo "  ./scripts/publish.sh ui           Publish all UI components"
     echo "  ./scripts/publish.sh angular      Publish angular only"
     echo "  ./scripts/publish.sh cli          Publish create-dayflow CLI"
     echo ""
@@ -35,6 +36,7 @@ for arg in "$@"; do
     case "$arg" in
         main) MODE="main" ;;
         plugins) MODE="plugins" ;;
+        ui) MODE="ui" ;;
         angular) MODE="angular" ;;
         cli) MODE="cli" ;;
         all) MODE="all" ;;
@@ -75,6 +77,7 @@ fi
 # ---------- Define Packages ----------
 MAIN_PKGS=(core react vue svelte)
 PLUGIN_DIRS=(drag keyboard-shortcuts localization sidebar)
+UI_DIRS=(context-menu range-picker)
 
 # Function to map directory names to package names
 get_plugin_package_name() {
@@ -87,14 +90,23 @@ get_plugin_package_name() {
     esac
 }
 
+get_ui_package_name() {
+    case "$1" in
+        "context-menu") echo "ui-context-menu" ;;
+        "range-picker") echo "ui-range-picker" ;;
+        *) echo "ui-$1" ;;
+    esac
+}
+
 # ---------- Calculation ----------
 STEP=1
 case "$MODE" in
     main)    TOTAL=$(( ${#MAIN_PKGS[@]} * 2 )) ;;
     angular) TOTAL=2 ;;
     plugins) TOTAL=$(( ${#PLUGIN_DIRS[@]} * 2 )) ;;
+    ui)      TOTAL=$(( ${#UI_DIRS[@]} * 2 )) ;;
     cli)     TOTAL=2 ;;
-    all)     TOTAL=$(( ${#MAIN_PKGS[@]} * 2 + ${#PLUGIN_DIRS[@]} * 2 + 2 + 2 )) ;;
+    all)     TOTAL=$(( ${#MAIN_PKGS[@]} * 2 + ${#PLUGIN_DIRS[@]} * 2 + ${#UI_DIRS[@]} * 2 + 2 + 2 )) ;;
 esac
 
 # ---------- Build Functions ----------
@@ -221,8 +233,9 @@ case "$MODE" in
     main)    PUBLISH_TOTAL=${#MAIN_PKGS[@]} ;;
     angular) PUBLISH_TOTAL=1 ;;
     plugins) PUBLISH_TOTAL=${#PLUGIN_DIRS[@]} ;;
+    ui)      PUBLISH_TOTAL=${#UI_DIRS[@]} ;;
     cli)     PUBLISH_TOTAL=1 ;;
-    all)     PUBLISH_TOTAL=$(( ${#MAIN_PKGS[@]} + ${#PLUGIN_DIRS[@]} + 1 + 1 )) ;;
+    all)     PUBLISH_TOTAL=$(( ${#MAIN_PKGS[@]} + ${#PLUGIN_DIRS[@]} + ${#UI_DIRS[@]} + 1 + 1 )) ;;
 esac
 
 # ---------- Summary ----------
@@ -261,6 +274,12 @@ if [ "$SKIP_BUILD" = false ]; then
             build_pkg "$pkg_name" "packages/plugins/$dir"
         done
     fi
+    if [[ "$MODE" == "all" || "$MODE" == "ui" ]]; then
+        for dir in "${UI_DIRS[@]}"; do
+            pkg_name=$(get_ui_package_name "$dir")
+            build_pkg "$pkg_name" "packages/ui/$dir"
+        done
+    fi
     if [[ "$MODE" == "all" || "$MODE" == "angular" ]]; then
         build_pkg "angular" "packages/angular"
     fi
@@ -271,7 +290,8 @@ else
         main)    STEP=$(( ${#MAIN_PKGS[@]} + 1 )) ;;
         angular) STEP=2 ;;
         plugins) STEP=$(( ${#PLUGIN_DIRS[@]} + 1 )) ;;
-        all)     STEP=$(( ${#MAIN_PKGS[@]} + ${#PLUGIN_DIRS[@]} + 2 )) ;;
+        ui)      STEP=$(( ${#UI_DIRS[@]} + 1 )) ;;
+        all)     STEP=$(( ${#MAIN_PKGS[@]} + ${#PLUGIN_DIRS[@]} + ${#UI_DIRS[@]} + 2 )) ;;
     esac
 fi
 
@@ -286,6 +306,13 @@ if [[ "$MODE" == "all" || "$MODE" == "plugins" ]]; then
     for dir in "${PLUGIN_DIRS[@]}"; do
         pkg_name=$(get_plugin_package_name "$dir")
         publish_pkg "$pkg_name" "$ROOT/packages/plugins/$dir" || true
+    done
+fi
+
+if [[ "$MODE" == "all" || "$MODE" == "ui" ]]; then
+    for dir in "${UI_DIRS[@]}"; do
+        pkg_name=$(get_ui_package_name "$dir")
+        publish_pkg "$pkg_name" "$ROOT/packages/ui/$dir" || true
     done
 fi
 

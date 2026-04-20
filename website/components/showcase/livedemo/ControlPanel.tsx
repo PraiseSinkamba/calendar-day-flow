@@ -406,7 +406,7 @@ export function ControlPanel({
                       <div className='space-y-4 bg-white p-3 dark:bg-slate-950'>
                         <div className='space-y-1.5'>
                           <p className='text-[10px] font-bold tracking-wider text-slate-400 uppercase'>
-                            Week View Preview
+                            Week View Preview (Personal, Wellness)
                           </p>
                           <div
                             className='relative flex h-10 w-full flex-col justify-center rounded-md border border-slate-100 bg-slate-50/50 p-1.5 dark:border-slate-800 dark:bg-slate-900/50'
@@ -432,6 +432,49 @@ export function ControlPanel({
                                 <div className='text-[8px] text-slate-400'>
                                   10:00 - 11:30
                                 </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Month View Preview */}
+                        <div className='space-y-1.5'>
+                          <p className='text-[10px] font-bold tracking-wider text-slate-400 uppercase'>
+                            Month View Preview (Team, Travel, Learning)
+                          </p>
+                          <div className='relative h-14 w-full rounded-md border border-slate-100 bg-slate-50/50 p-1 dark:border-slate-800 dark:bg-slate-900/50'>
+                            <div className='grid h-full grid-cols-3 border border-slate-200/50 dark:border-slate-800/50'>
+                              <div className='border-r border-slate-200/50 p-0.5 dark:border-slate-800/50'>
+                                <span className='text-[8px] opacity-30'>
+                                  12
+                                </span>
+                              </div>
+                              <div className='border-r border-slate-200/50 bg-white p-0.5 dark:border-slate-800/50 dark:bg-slate-950'>
+                                <span className='text-[8px] font-bold'>13</span>
+                                <div
+                                  className='relative mt-0.5 flex h-3 items-center overflow-hidden rounded-[2px] px-1 pl-2'
+                                  style={{
+                                    background:
+                                      'repeating-linear-gradient(-45deg, rgba(37, 99, 235, 0.1) 0px, rgba(37, 99, 235, 0.1) 6px, rgba(236, 72, 153, 0.1) 6px, rgba(236, 72, 153, 0.1) 12px, rgba(20, 184, 166, 0.1) 12px, rgba(20, 184, 166, 0.1) 18px)',
+                                  }}
+                                >
+                                  {/* Vertical segmented color bar */}
+                                  <div
+                                    className='absolute top-0 bottom-0 left-0.5 w-[3px] rounded'
+                                    style={{
+                                      background:
+                                        'linear-gradient(to bottom, #2563eb 0%, #2563eb 33.33%, #ec4899 33.33%, #ec4899 66.66%, #14b8a6 66.66%, #14b8a6 100%)',
+                                    }}
+                                  />
+                                  <span className='truncate text-[8px] font-medium'>
+                                    Company Off-site
+                                  </span>
+                                </div>
+                              </div>
+                              <div className='p-0.5'>
+                                <span className='text-[8px] opacity-30'>
+                                  14
+                                </span>
                               </div>
                             </div>
                           </div>

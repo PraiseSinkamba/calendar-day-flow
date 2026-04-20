@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.0] - 2026-04-20
+
+### New Features & Enhancements
+
+- **Multi-calendar Events**: Added native `calendarIds` support on events. A single event can now belong to multiple calendars, stays visible as long as any linked calendar is visible, and renders with DayFlow's built-in multi-color striped styling.
+
+### Fixed
+
+- **Style Self-Containment**: Completed the style refactor so DayFlow no longer depends on internal atomic CSS classes or host-side `@source` scanning. `styles.css` and `styles.components.css` are now self-contained distribution artifacts.
+- **Host Style Isolation**: Tightened `df-*` semantic styling contracts across core, UI packages, plugins, and dist CSS checks to reduce conflicts with UnoCSS, Tailwind, and other host styling systems.
+- **Year / Day / Week View Polish**: Refined several view-specific layout details, including year-view event rendering, day/week timezone labels, and overlay/token usage in complex UI surfaces.
+
+### Documentation
+
+- Added multi-calendar event documentation and showcase examples.
+- Refreshed the website live demo controls and interactive examples.
+- Updated setup and theme customization guidance to match the self-contained styling model and remove outdated `@source`-based integration steps.
+
 ## [3.4.0] - 2026-04-06
 
 ### New Features & Enhancements

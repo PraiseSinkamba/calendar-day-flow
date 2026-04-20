@@ -13,7 +13,6 @@ import ViewHeader from '@/components/common/ViewHeader';
 import { GridContextMenu } from '@/components/contextMenu';
 import { useLocale } from '@/locale';
 import { useDragForView } from '@/plugins/dragBridge';
-import { scrollbarHide } from '@/styles/classNames';
 import {
   Event,
   MonthEventDragState,

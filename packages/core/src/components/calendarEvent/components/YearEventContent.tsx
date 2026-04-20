@@ -102,7 +102,9 @@ const YearEventContent = ({
           )}
 
           <div className='df-event-year-main'>
-            <div className='df-event-year-title'>{getDisplayText()}</div>
+            <div className='df-event-year-title df-event-year-title-fade'>
+              {getDisplayText()}
+            </div>
           </div>
 
           {/* Add small indicator for continuation if needed, similar to MultiDayEvent */}
@@ -134,9 +136,15 @@ const YearEventContent = ({
             className='df-event-year-indicator'
           ></span>
         )}
-        <span className='df-event-year-title df-event-year-title-strong'>
+        <span className='df-event-year-title df-event-year-title-strong df-event-year-title-fade'>
           {titleText}
         </span>
+
+        {segment.isLastSegment && !segment.isFirstSegment && (
+          <div className='df-event-year-tail'>
+            <div className='df-event-year-tail-dot'></div>
+          </div>
+        )}
       </div>
     );
   };
