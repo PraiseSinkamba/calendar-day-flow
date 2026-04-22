@@ -36,11 +36,7 @@ import React, {
 
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { getWebsiteCalendars } from '@/utils/palette';
-import {
-  generateSampleEvents,
-  generateSampleResources,
-  Resource,
-} from '@/utils/sampleData';
+import { generateSampleEvents } from '@/utils/sampleData';
 
 import { CalendarViewer } from './livedemo/CalendarViewer';
 import { ControlPanel } from './livedemo/ControlPanel';
@@ -100,9 +96,6 @@ export function InteractiveCalendar() {
     yearMode: 'fixed-week',
     switcherMode: 'buttons',
   });
-
-  const [resources] = useState<Resource[]>(generateSampleResources());
-  const getResourceId = useCallback((event: Event) => event.calendarId, []);
 
   useEffect(() => {
     setMounted(true);
@@ -216,15 +209,6 @@ export function InteractiveCalendar() {
       );
     }
 
-    v.push(
-      createResourceGridView({
-        mode: 'resourceView',
-        resources,
-        visibleDays: 5,
-        getResourceId,
-      })
-    );
-
     const currentView = selections.selectedViews.includes(selections.activeView)
       ? selections.activeView
       : selections.selectedViews.includes(ViewType.MONTH)
@@ -279,8 +263,6 @@ export function InteractiveCalendar() {
     selections.switcherMode,
     selections.secondaryTimeZone,
     selections.yearMode,
-    resources,
-    getResourceId,
     events,
     mounted,
     calendarsWithGroups,
