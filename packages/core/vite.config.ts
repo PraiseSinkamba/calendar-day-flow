@@ -49,19 +49,19 @@ export default defineConfig({
       },
       {
         find: '@dayflow/caldav',
-        replacement: resolve(__dirname, '../caldav/src/index.ts'),
+        replacement: resolve(__dirname, '../caldav/core/src/index.ts'),
       },
       {
         find: '@caldav',
-        replacement: resolve(__dirname, '../caldav/src'),
+        replacement: resolve(__dirname, '../caldav/core/src'),
       },
       {
         find: '@dayflow/google-sync',
-        replacement: resolve(__dirname, '../google-sync/src/index.ts'),
+        replacement: resolve(__dirname, '../caldav/google-sync/src/index.ts'),
       },
       {
         find: '@google-sync',
-        replacement: resolve(__dirname, '../google-sync/src'),
+        replacement: resolve(__dirname, '../caldav/google-sync/src'),
       },
       { find: '@examples', replacement: resolve(__dirname, '../../examples') },
       {

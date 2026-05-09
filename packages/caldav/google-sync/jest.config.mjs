@@ -1,4 +1,4 @@
-const coreModules = '<rootDir>/../../packages/core/node_modules';
+const coreModules = '<rootDir>/../../../packages/core/node_modules';
 
 export default {
   preset: 'ts-jest',
@@ -15,8 +15,8 @@ export default {
   },
   moduleNameMapper: {
     '^@google-sync/(.*)$': '<rootDir>/src/$1',
-    '^@dayflow/core$': '<rootDir>/../../packages/core/src/caldav-entry.ts',
-    '^@/(.*)$': '<rootDir>/../../packages/core/src/$1',
+    '^@dayflow/core$': '<rootDir>/../../../packages/core/src/caldav-entry.ts',
+    '^@/(.*)$': '<rootDir>/../../../packages/core/src/$1',
     '^preact$': `${coreModules}/preact/dist/preact.js`,
     '^preact/hooks$': `${coreModules}/preact/hooks/dist/hooks.js`,
     '^preact/jsx-runtime$': `${coreModules}/preact/jsx-runtime/dist/jsxRuntime.js`,
