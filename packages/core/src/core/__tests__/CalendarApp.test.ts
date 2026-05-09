@@ -57,6 +57,54 @@ describe('CalendarApp', () => {
       expect(events[0].title).toBe('Updated Title');
     });
 
+    it('updates an event once and preserves the assigned calendarId', async () => {
+      const onEventUpdate = jest.fn();
+      const app = new CalendarApp({
+        views: [],
+        plugins: [],
+        events: [
+          {
+            id: 'test-update-once',
+            title: 'Original Title',
+            start: Temporal.Now.plainDateISO(),
+            end: Temporal.Now.plainDateISO(),
+          },
+        ],
+        calendars: [
+          {
+            id: 'work',
+            name: 'Work',
+            colors: {
+              eventColor: '#000',
+              eventSelectedColor: '#111',
+              lineColor: '#222',
+              textColor: '#333',
+            },
+          },
+        ],
+        defaultCalendar: 'work',
+        callbacks: { onEventUpdate },
+      });
+
+      await app.updateEvent('test-update-once', { title: 'Updated Title' });
+
+      expect(app.getAllEvents()).toEqual([
+        expect.objectContaining({
+          id: 'test-update-once',
+          title: 'Updated Title',
+          calendarId: 'work',
+        }),
+      ]);
+      expect(onEventUpdate).toHaveBeenCalledTimes(1);
+      expect(onEventUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'test-update-once',
+          title: 'Updated Title',
+          calendarId: 'work',
+        })
+      );
+    });
+
     it('should delete an event', async () => {
       const app = new CalendarApp({
         views: [],

@@ -58,24 +58,6 @@ export class EventManager {
     });
   }
 
-  subscribeEventChanges(
-    listener: (changes: EventChange[]) => void
-  ): () => void {
-    this.eventChangeListeners.add(listener);
-    return () => this.eventChangeListeners.delete(listener);
-  }
-
-  private notifyEventChangeListeners(changes: EventChange[]): void {
-    this.eventChangeListeners.forEach(listener => listener(changes));
-  }
-
-  private static stampChanges(
-    changes: RawEventChange[],
-    source: EventMutationSource
-  ): EventChange[] {
-    return changes.map(change => ({ ...change, source }) as EventChange);
-  }
-
   private setupStoreListeners(): void {
     this.store.onEventChange = (change: EventChange) => {
       this.syncExternalEventsToState();
@@ -309,7 +291,6 @@ export class EventManager {
         this.pendingChangeSource = null;
       }
     }
-    await this.store.updateEvent(id, eventUpdate);
   }
 
   async deleteEvent(id: string): Promise<void> {
